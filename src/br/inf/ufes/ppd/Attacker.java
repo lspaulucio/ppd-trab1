@@ -4,7 +4,6 @@ package br.inf.ufes.ppd;
  * Attacker.java
  */
 
-
 import java.rmi.Remote;
 import java.rmi.RemoteException;
 

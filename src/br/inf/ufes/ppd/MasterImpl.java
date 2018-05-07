@@ -1,11 +1,8 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package br.inf.ufes.ppd;
 
 import java.rmi.RemoteException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -14,11 +11,12 @@ import java.util.UUID;
  */
 public class MasterImpl implements Master 
 {
+    private List<Slave> slaves = new ArrayList<Slave>();
     
     //SlaveManager interfaces
     @Override
     public synchronized void addSlave(Slave s, String slaveName, UUID slavekey) throws RemoteException {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        slaves.add(s);
     }
 
     @Override

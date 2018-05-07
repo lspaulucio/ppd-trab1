@@ -5,7 +5,7 @@ import java.util.*;
 
 /**
  *
- * @author leonardo
+ * @author Leonardo Santos Paulucio
  */
 public class Client {
 
