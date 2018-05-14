@@ -1,7 +1,9 @@
 package br.inf.ufes.ppd;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
@@ -58,7 +60,7 @@ public class SlaveImpl implements Slave {
             dic.close();
 
         } catch (IOException e) {
-            e.getMessage();
+            System.err.println("Erro " + e.getMessage());
         }
 
 //       for (String s : keys) {
@@ -77,14 +79,14 @@ public class SlaveImpl implements Slave {
         Timer timer = new Timer();
                 
         //Subattack execution
-        for (currentIndex = initialwordindex; currentIndex <= finalwordindex; currentIndex++) {
+        for (currentIndex = initialwordindex; currentIndex < finalwordindex; currentIndex++) {
 
             try {
                 //Making a timer to notify master about currentIndex
                 timer.scheduleAtFixedRate(new TimerTask() {
                     public void run() {
                         try{
-                            //Trying to notify master about current index
+                            //Notify master about current index
                             callbackinterface.checkpoint(uid, attackNumber, currentIndex);
 //                            System.out.println("Index " + currentIndex);
                         }
@@ -112,14 +114,14 @@ public class SlaveImpl implements Slave {
 
                 //Checking if known text exists in decrypted text
                 if (decryptedText.contains(KNOWN_TEXT)) {
-                    System.out.println("Key found: " + actualKey);
                     
                     Guess currentGuess = new Guess();
                     currentGuess.setKey(actualKey);
                     currentGuess.setMessage(decrypted);
-                    
+                                        
                     callbackinterface.foundGuess(this.getUid(), attackNumber, currentIndex, currentGuess);
-                    //saveFile(new String(key) + ".msg", decrypted);
+                    
+//                    System.out.println("Key found: " + actualKey);
                 }
 
             } catch (javax.crypto.BadPaddingException e) {
@@ -127,11 +129,12 @@ public class SlaveImpl implements Slave {
                 // porem nao quer dizer que a senha esta correta se nao jogar essa excecao
                 //System.out.println("Senha " + new String(key) + " invalida.");
             } catch (Exception e) {
-                System.out.println(e.getMessage());
+                System.out.println("Error startsubattack: " + e.getMessage());
             }
         }
         
         timer.cancel(); //Finish task checkpoint
+        callbackinterface.checkpoint(uid, attackNumber, currentIndex); //End job sending last checkpoint
     } 
 
     public static void main(String[] args) {
@@ -179,13 +182,13 @@ public class SlaveImpl implements Slave {
                         }
                     }
                 }
-            }, 0, REBIND_TIME*1000);  // 0 = delay, REBINDTIME = frequence in ms
+            }, 0, REBIND_TIME*1000);  // 0 = delay, REBIND_TIME = frequence in ms
             
-
+        
         } catch (Exception e) {
             System.err.println("Slave exception: " + e.getMessage());
             e.printStackTrace();
 
-        }
+        }        
     }        
 }
