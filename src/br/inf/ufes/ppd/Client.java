@@ -11,6 +11,7 @@ public class Client {
 
     public static void main(String[] args)
     {
+        //USAR NOME STUB PARA AS REFERENCIAS
         final String DICTIONARY = "dictionary.txt";
         List<String> chaves = new ArrayList<String>();
         

@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
+import java.rmi.server.UnicastRemoteObject;
 import java.util.*;
 import javax.crypto.Cipher;
 import javax.crypto.spec.SecretKeySpec;
@@ -15,8 +16,36 @@ import javax.crypto.spec.SecretKeySpec;
  */
 public class SlaveImpl implements Slave {
 
-    private List<String> keys = new ArrayList<String>();
+    private static List<String> keys = new ArrayList<String>();
+    private UUID uid;
+    private String name;
+    private long currentIndex;
 
+    public long getCurrentIndex() {
+        return currentIndex;
+    }
+
+    public void setCurrentIndex(long currentIndex) {
+        this.currentIndex = currentIndex;
+    }
+
+    public UUID getUid() {
+        return uid;
+    }
+
+    public void setUid(UUID uid) {
+        this.uid = uid;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+    
+    //Dictionary read function
     public void readDictionary(String filename) {
 
         try {
@@ -43,23 +72,53 @@ public class SlaveImpl implements Slave {
     public void startSubAttack(byte[] ciphertext, byte[] knowntext, long initialwordindex, long finalwordindex, int attackNumber, SlaveManager callbackinterface) throws RemoteException {
 
         String KNOWN_TEXT = new String(knowntext);
-
-        for (long i = initialwordindex; i <= finalwordindex; i++) {
+        
+        final int CHECK_TIMER = 10; //10 seconds
+        Timer timer = new Timer();
+                
+        //Subattack execution
+        for (currentIndex = initialwordindex; currentIndex <= finalwordindex; currentIndex++) {
 
             try {
-                String actualKey = keys.get((int) i);
+                //Making a timer to notify master about currentIndex
+                timer.scheduleAtFixedRate(new TimerTask() {
+                    public void run() {
+                        try{
+                            //Trying to notify master about current index
+                            callbackinterface.checkpoint(uid, attackNumber, currentIndex);
+//                            System.out.println("Index " + currentIndex);
+                        }
+                        catch (Exception e){
+                            System.err.println("Master down " + e.getMessage());
+                            
+                        }
+                    }
+                }, 0, CHECK_TIMER*1000);  // 0 = delay, REBINDTIME = frequence in ms
+                //End Checkpoint timer
+                
+                
+                String actualKey = keys.get((int) currentIndex); //Get current key
+                
+                //Blowfish configuration
                 SecretKeySpec keySpec;
                 keySpec = new SecretKeySpec(actualKey.getBytes(), "Blowfish");
                 Cipher cipher = Cipher.getInstance("Blowfish");
-                cipher.init(Cipher.DECRYPT_MODE, keySpec);
+                cipher.init(Cipher.DECRYPT_MODE, keySpec); //Decrypt mode
 
+                //Try to decrypt the text
                 byte[] decrypted = cipher.doFinal(ciphertext);
-
+                
                 String decryptedText = new String(decrypted);
 
+                //Checking if known text exists in decrypted text
                 if (decryptedText.contains(KNOWN_TEXT)) {
-                    System.out.println("Chave encontrada: " + actualKey);
-                    //CRIAR GUESS E ENVIAR AO MESTRE
+                    System.out.println("Key found: " + actualKey);
+                    
+                    Guess currentGuess = new Guess();
+                    currentGuess.setKey(actualKey);
+                    currentGuess.setMessage(decrypted);
+                    
+                    callbackinterface.foundGuess(this.getUid(), attackNumber, currentIndex, currentGuess);
                     //saveFile(new String(key) + ".msg", decrypted);
                 }
 
@@ -68,31 +127,65 @@ public class SlaveImpl implements Slave {
                 // porem nao quer dizer que a senha esta correta se nao jogar essa excecao
                 //System.out.println("Senha " + new String(key) + " invalida.");
             } catch (Exception e) {
-                e.printStackTrace();
+                System.out.println(e.getMessage());
             }
         }
-    }
+        
+        timer.cancel(); //Finish task checkpoint
+    } 
 
     public static void main(String[] args) {
 
         final String DICTIONARY_PATH = "dictionary.txt";
-        final String REGISTRY_NAME = "mestre";
+        final String REGISTRY_MASTER_NAME = "mestre";
         final String REGISTRY_ADDRESS = "localhost";
-
-        //Creating a new Slave
-        SlaveImpl s = new SlaveImpl();
-        s.readDictionary(DICTIONARY_PATH);
-        UUID uuid = UUID.randomUUID();
+        final int REBIND_TIME = 30;
         
+        //Creating a new Slave
+        SlaveImpl slave = new SlaveImpl();
+        slave.readDictionary(DICTIONARY_PATH);
+        slave.setName("Slave1");
+        slave.setUid(UUID.randomUUID());
+ 
         try {
             Registry registry = LocateRegistry.getRegistry(REGISTRY_ADDRESS);
-            Master m = (Master) registry.lookup(REGISTRY_NAME);
-            m.addSlave((Slave) s, "Slave1", uuid);
+            Master m = (Master) registry.lookup(REGISTRY_MASTER_NAME);
+            
+            Slave slaveRef = (Slave) UnicastRemoteObject.exportObject(slave,0);
+        
+            Timer timer = new Timer();
+            
+            //Making a timer to reconnect to the master every 30 seconds
+            timer.scheduleAtFixedRate(new TimerTask() {
+                public void run() {
+                    try{
+                        //Trying to rebind on master
+                        m.addSlave(slaveRef, slave.getName(), slave.getUid());
+//                        System.out.println("Timer test");
+                    }
+                    catch (Exception e){
+                        System.err.println("Master down " + e.getMessage());
+                        
+                        //Master down, so try to find another master on registry
+                        try {
+                           
+                            Registry registry = LocateRegistry.getRegistry(REGISTRY_ADDRESS);
+                            Master m = (Master) registry.lookup(REGISTRY_MASTER_NAME);
+                            m.addSlave(slaveRef, slave.getName(), slave.getUid());
+                        }
+                        catch (Exception p)
+                        {
+                            System.err.println("Master not found " + p.getMessage() );
+                        }
+                    }
+                }
+            }, 0, REBIND_TIME*1000);  // 0 = delay, REBINDTIME = frequence in ms
+            
 
         } catch (Exception e) {
-            System.err.println("Client exception: " + e.toString());
+            System.err.println("Slave exception: " + e.getMessage());
             e.printStackTrace();
 
         }
-    }
+    }        
 }
