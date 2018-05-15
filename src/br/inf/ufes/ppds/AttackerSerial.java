@@ -17,7 +17,7 @@ import javax.crypto.spec.*;
  */
 public class AttackerSerial {
         
-    final static String DICTIONARY_PATH = "../../dictionary.txt";
+    final static String DICTIONARY_PATH = "dictionary.txt";
     static List<String> keys = new ArrayList<String>();
         
     private static byte[] readFile(String filename) throws IOException {
@@ -62,8 +62,8 @@ public class AttackerSerial {
         }catch(IOException e){
             e.getMessage();
         }
-        for(String s : keys)
-            System.out.println(s);
+        for(String s : keys);
+//            System.out.println(s);
         System.out.println("Tamanho: " + keys.size());
     }
             
