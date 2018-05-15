@@ -71,81 +71,92 @@ public class SlaveImpl implements Slave {
     @Override
     public void startSubAttack(byte[] ciphertext, byte[] knowntext, long initialwordindex, long finalwordindex, int attackNumber, SlaveManager callbackinterface) throws RemoteException {
 
-        String KNOWN_TEXT = new String(knowntext);
-        
-        final int CHECK_TIMER = 10; //10 seconds
-        Timer timer = new Timer();
-                
-        //Subattack execution
-        for (currentIndex = initialwordindex; currentIndex < finalwordindex; currentIndex++) {
+        new Thread() {    
+            public void run()
+            {
+                String KNOWN_TEXT = new String(knowntext);
 
-            try {
+                final int CHECK_TIMER = 10; //10 seconds
+                Timer timer = new Timer();
+                System.out.println("Novo ataque " + attackNumber);
+                
+                //Subattack execution
                 //Making a timer to notify master about currentIndex
                 timer.scheduleAtFixedRate(new TimerTask() {
                     public void run() {
                         try{
                             //Notify master about current index
                             callbackinterface.checkpoint(uid, attackNumber, currentIndex);
-//                            System.out.println("Index " + currentIndex);
+                            System.out.println("Checkpoint " + currentIndex);
                         }
                         catch (Exception e){
                             System.err.println("Master down " + e.getMessage());
-                            
+
                         }
                     }
-                }, 0, CHECK_TIMER*1000);  // 0 = delay, REBINDTIME = frequence in ms
+                }, 0, CHECK_TIMER*1000);  // 0 = delay, CHECK_TIMER = frequence in ms
                 //End Checkpoint timer
-                
-                
-                String actualKey = keys.get((int) currentIndex); //Get current key
-                
-                //Blowfish configuration
-                SecretKeySpec keySpec;
-                keySpec = new SecretKeySpec(actualKey.getBytes(), "Blowfish");
-                Cipher cipher = Cipher.getInstance("Blowfish");
-                cipher.init(Cipher.DECRYPT_MODE, keySpec); //Decrypt mode
+                        
+                for (currentIndex = initialwordindex; currentIndex < finalwordindex; currentIndex++) {
 
-                //Try to decrypt the text
-                byte[] decrypted = cipher.doFinal(ciphertext);
-                
-                String decryptedText = new String(decrypted);
+                    try {
+                        String actualKey = keys.get((int) currentIndex); //Get current key
 
-                //Checking if known text exists in decrypted text
-                if (decryptedText.contains(KNOWN_TEXT)) {
-                    
-                    Guess currentGuess = new Guess();
-                    currentGuess.setKey(actualKey);
-                    currentGuess.setMessage(decrypted);
-                                        
-                    callbackinterface.foundGuess(this.getUid(), attackNumber, currentIndex, currentGuess);
-                    
-//                    System.out.println("Key found: " + actualKey);
+                        //Blowfish configuration
+                        SecretKeySpec keySpec;
+                        keySpec = new SecretKeySpec(actualKey.getBytes(), "Blowfish");
+                        Cipher cipher = Cipher.getInstance("Blowfish");
+                        cipher.init(Cipher.DECRYPT_MODE, keySpec); //Decrypt mode
+
+                        //Try to decrypt the text
+                        byte[] decrypted = cipher.doFinal(ciphertext);
+
+                        String decryptedText = new String(decrypted);
+
+                        //Checking if known text exists in decrypted text
+                        if (decryptedText.contains(KNOWN_TEXT)) {
+
+                            Guess currentGuess = new Guess();
+                            currentGuess.setKey(actualKey);
+                            currentGuess.setMessage(decrypted);
+
+                            callbackinterface.foundGuess(uid, attackNumber, currentIndex, currentGuess);
+
+        //                    System.out.println("Key found: " + actualKey);
+                        }
+
+                    } catch (javax.crypto.BadPaddingException e) {
+                        // essa excecao e jogada quando a senha esta incorreta
+                        // porem nao quer dizer que a senha esta correta se nao jogar essa excecao
+                        //System.err.println("Senha " + new String(key) + " invalida.");
+                    } catch (Exception e) {
+                        System.err.println("Error startsubattack: " + e.getMessage());
+                    }
                 }
-
-            } catch (javax.crypto.BadPaddingException e) {
-                // essa excecao e jogada quando a senha esta incorreta
-                // porem nao quer dizer que a senha esta correta se nao jogar essa excecao
-                //System.out.println("Senha " + new String(key) + " invalida.");
-            } catch (Exception e) {
-                System.out.println("Error startsubattack: " + e.getMessage());
+                timer.cancel(); //Finish task checkpoint
+                try {
+                    callbackinterface.checkpoint(uid, attackNumber, currentIndex); //End job sending last checkpoint            
+                    System.out.println("Checkpoint " + currentIndex);
+                }
+                catch (Exception e){
+                    System.err.println("Callback fail " + e.getMessage());                
+                }
+                System.out.println("Fim subattack");
             }
-        }
-        
-        timer.cancel(); //Finish task checkpoint
-        callbackinterface.checkpoint(uid, attackNumber, currentIndex); //End job sending last checkpoint
+        }.start();   
     } 
 
     public static void main(String[] args) {
 
         final String DICTIONARY_PATH = "dictionary.txt";
         final String REGISTRY_MASTER_NAME = "mestre";
-        final String REGISTRY_ADDRESS = "localhost";
+        final String REGISTRY_ADDRESS = "192.168.1.124";
         final int REBIND_TIME = 30;
         
         //Creating a new Slave
         SlaveImpl slave = new SlaveImpl();
         slave.readDictionary(DICTIONARY_PATH);
-        slave.setName("Slave1");
+        slave.setName("SlaveLeonardo");
         slave.setUid(UUID.randomUUID());
  
         try {
@@ -162,7 +173,7 @@ public class SlaveImpl implements Slave {
                     try{
                         //Trying to rebind on master
                         m.addSlave(slaveRef, slave.getName(), slave.getUid());
-//                        System.out.println("Timer test");
+                        System.out.println("Registrado");
                     }
                     catch (Exception e){
                         System.err.println("Master down " + e.getMessage());
@@ -186,7 +197,6 @@ public class SlaveImpl implements Slave {
         } catch (Exception e) {
             System.err.println("Slave exception: " + e.getMessage());
             e.printStackTrace();
-
         }        
     }        
 }
