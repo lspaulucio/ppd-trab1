@@ -78,7 +78,7 @@ public class SlaveImpl implements Slave {
 
                 final int CHECK_TIMER = 10; //10 seconds
                 Timer timer = new Timer();
-                System.out.println("Novo ataque " + attackNumber);
+                System.out.println("New Attack: " + attackNumber);
                 
                 //Subattack execution
                 //Making a timer to notify master about currentIndex
@@ -141,7 +141,7 @@ public class SlaveImpl implements Slave {
                 catch (Exception e){
                     System.err.println("Callback fail " + e.getMessage());                
                 }
-                System.out.println("Fim subattack");
+                System.out.println("End subattack: " + attackNumber);
             }
         }.start();   
     } 

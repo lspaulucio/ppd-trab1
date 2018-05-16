@@ -119,9 +119,11 @@ public class MasterImpl implements Master {
     //SlaveManager interfaces
     @Override
     public void addSlave(Slave s, String slaveName, UUID slavekey) throws RemoteException {
-        SlaveControl sc = new SlaveControl(s, slaveName, System.currentTimeMillis());
-
+        
+        //Checking if slave is already registered
         if (!slaves.containsKey(slavekey)) {
+            SlaveControl sc = new SlaveControl(s, slaveName, System.currentTimeMillis());
+            
             synchronized (slaves) {
                 slaves.put(slavekey, sc);
             }
@@ -157,7 +159,7 @@ public class MasterImpl implements Master {
         SlaveControl s = slaves.get(slaveKey);
         AttackControl attack = s.getAttackList().get(attackNumber);
         
-        s.setTime(System.currentTimeMillis()); //Registering time
+        s.setTime(System.currentTimeMillis()); //Registering current time of checkpoint
         attack.setCurrentCheck(currentindex);   //Updating currentIndex
         
         if(attack.getCurrentCheck() == attack.getLastCheck()){
@@ -179,27 +181,39 @@ public class MasterImpl implements Master {
     //Attacker interfaces
     @Override
     public Guess[] attack(byte[] ciphertext, byte[] knowntext) throws RemoteException {
-        int dictionarySize = 80368;
-        int ID = getAttackId();
+        final int dictionarySize = 80368;
+        int attackID = getAttackId();
         
-        int indexDivision = dictionarySize / slaves.size();
-        int initialIndex = 0; 
-        int finalIndex = initialIndex + indexDivision;
+        new Thread(){        
+            public void run(){
         
-        guessList.put(ID, new ArrayList<Guess>());
-        
-        for (SlaveControl s : slaves.values()) {
-            Slave sl = s.getSlaveRef();
-            sl.startSubAttack(ciphertext, knowntext, initialIndex, finalIndex, ID, this);
-            
-            initialIndex = initialIndex + indexDivision;
-            finalIndex = initialIndex + indexDivision;
-            
-            if(finalIndex > dictionarySize)
-                finalIndex = dictionarySize;            
-        }
-        //criar thread para verificar e retornar guess
-        return null;
+                Map<UUID, SlaveControl> slavesCopy;
+                int indexDivision = dictionarySize / slaves.size();
+                int initialIndex = 0; 
+                int finalIndex = initialIndex + indexDivision;
+
+                synchronized(guessList){
+                    guessList.put(attackID, new ArrayList<Guess>());
+                }
+
+                synchronized(slaves){
+                    slavesCopy = new HashMap<>(slaves);
+                }
+                
+                for (SlaveControl s : slavesCopy.values()) {
+                    Slave sl = s.getSlaveRef();
+                    sl.startSubAttack(ciphertext, knowntext, initialIndex, finalIndex, attackID, new MasterImpl());
+
+                    initialIndex = initialIndex + indexDivision;
+                    finalIndex = initialIndex + indexDivision;
+
+                    if(finalIndex > dictionarySize)
+                        finalIndex = dictionarySize;            
+                }
+                //criar thread para verificar e retornar guess
+                
+            }
+        }.start();
     }
 
     public static void main(String[] args) {
@@ -213,7 +227,6 @@ public class MasterImpl implements Master {
             Registry registry = LocateRegistry.getRegistry(REGISTRY_ADDRESS); // opcional: host
             registry.rebind(REGISTRY_NAME, masterReference);
 
-            //Criar HASHMAP para adicionar slaves
             System.out.println("Master ready!");
         } catch (Exception e) {
             System.err.println("Server exception: " + e.toString());
