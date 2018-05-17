@@ -1,7 +1,11 @@
 package br.inf.ufes.ppds;
 
+import br.inf.ufes.ppd.cripto.Decrypt;
 import java.io.*;
+import static java.lang.Thread.sleep;
 import java.util.*;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import javax.crypto.Cipher;
 import javax.crypto.spec.*;
@@ -14,7 +18,9 @@ public class AttackerSerial {
         
     final static String DICTIONARY_PATH = "dictionary.txt";
     static List<String> keys = new ArrayList<String>();
-        
+    
+    long currentIndex;
+    
     private static byte[] readFile(String filename) throws IOException {
 
         File file = new File(filename);
@@ -41,7 +47,7 @@ public class AttackerSerial {
         out.close();
 
     }
-    
+        
     private static void readDictionary(String filename){
 
         try{
@@ -57,61 +63,55 @@ public class AttackerSerial {
         }catch(IOException e){
             e.getMessage();
         }
-        for(String s : keys);
+//        for(String s : keys);
 //            System.out.println(s);
-        System.out.println("Tamanho: " + keys.size());
+//        System.out.println("Tamanho: " + keys.size());
     }
             
-    
-
     public static void main(String[] args) {
-        // args[0] e o nome do arquivo de entrada
-        // args[1] e a frase conhecida
+            // args[0] e o nome do arquivo de entrada
+            // args[1] e a frase conhecida
+            
+        try {
+            //Abre o dicionario
+            Scanner file = new Scanner(new FileReader(DICTIONARY_PATH));
+            
+            String KNOWN_TEXT = "JFIF";//args[1];
+            byte[] message = readFile("desafio.cipher");////args[0]);
+            byte[] key = null;
+            
+            while(file.hasNext())
+            {
+                try{
+                    key = file.next().getBytes();
+                    
+                    byte[] decrypted = Decrypt.decrypter(key, message);
+
+                    String text = new String(decrypted);
+                    if(text.contains(KNOWN_TEXT))
+                    {
+                        System.out.println("Chave encontrada: " + new String(key));
+                        saveFile(new String(key) + ".msg", decrypted);
+                    }
+                
+                } catch (javax.crypto.BadPaddingException e) {
+                    // essa excecao e jogada quando a senha esta incorreta
+                    // porem nao quer dizer que a senha esta correta se nao jogar essa excecao
+                    //System.out.println("Senha " + new String(key) + " invalida.");
+                }
+            }
         
-//        try {
-//            //Abre o dicionario
-//            Scanner file = new Scanner(new FileReader(DICTIONARY_PATH));
-//            
-//            String KNOWN_TEXT = args[1];
-//            byte[] message = readFile(args[0]);
-//            byte[] key = null;
-//            
-//            while(file.hasNext())
-//            {
-//                try{
-//                    key = file.next().getBytes();
-//                    SecretKeySpec keySpec;
-//                    keySpec = new SecretKeySpec(key, "Blowfish");
-//                    Cipher cipher = Cipher.getInstance("Blowfish");
-//                    cipher.init(Cipher.DECRYPT_MODE, keySpec);
-//
-//                    byte[] decrypted = cipher.doFinal(message);
-//
-//                    String text = new String(decrypted);
-//                    if(text.contains(KNOWN_TEXT))
-//                    {
-//                        System.out.println("Chave encontrada: " + new String(key));
-//                        //saveFile(new String(key) + ".msg", decrypted);
-//                    }
-//                
-//                } catch (javax.crypto.BadPaddingException e) {
-//                    // essa excecao e jogada quando a senha esta incorreta
-//                    // porem nao quer dizer que a senha esta correta se nao jogar essa excecao
-//                    //System.out.println("Senha " + new String(key) + " invalida.");
-//                }
-//            }
-//        
-//            file.close();
-//            
-//        }catch (FileNotFoundException e) {
-//            System.out.println(e.getMessage());
-//            
-//        }catch (Exception e){
-//            //dont try this at home
-//                e.printStackTrace();
-//        }
+            file.close();
+            
+        }catch (FileNotFoundException e) {
+            System.out.println(e.getMessage());
+            
+        }catch (Exception e){
+            //dont try this at home
+                e.printStackTrace();
+        }
         
-        readDictionary(DICTIONARY_PATH);
+//        readDictionary(DICTIONARY_PATH);
     }
 
 }

@@ -31,21 +31,23 @@ public class RebindService extends TimerTask {
                 
         try{
             //Trying to rebind on master
+//            System.out.println("Cheguei");
             masterRef.addSlave(slaveRef, slaveName, slaveUID);
-            System.out.println("Registrado");
+            System.out.println("Slave rebind");
         }
         catch (Exception e){
-            System.err.println("Master down " + e.getMessage());
+            System.err.println("Master down. Error:\n" + e.getMessage());
 
             //Master down, so try to find another master on registry
             try {
                 Registry registry = LocateRegistry.getRegistry(Configurations.REGISTRY_ADDRESS);
                 Master m = (Master) registry.lookup(Configurations.REGISTRY_MASTER_NAME);
+                
                 m.addSlave(slaveRef, slaveName, slaveUID);
                 masterRef = m; //Save new master reference
             }
             catch (Exception p){
-                System.err.println("Master not found or not registered on registry " + p.getMessage());
+                System.err.println("Master not found or not registered on registry. Error:\n " + p.getMessage());
             }
         }
     }

@@ -19,7 +19,7 @@ import java.util.UUID;
 public class SlaveServer {
     
     public static void main(String[] args) {
-        
+        String SLAVE_NAME = "SlaveLeonardo";
         //Creating a new Slave
         SlaveImpl slave = new SlaveImpl();
         slave.readDictionary(Configurations.DICTIONARY_PATH);
@@ -30,10 +30,12 @@ public class SlaveServer {
             Master m = (Master) registry.lookup(Configurations.REGISTRY_MASTER_NAME);
             
             Slave slaveRef = (Slave) UnicastRemoteObject.exportObject(slave,0);
-        
+//            m.addSlave(slaveRef, SLAVE_NAME, slave.getUid());
+//            System.out.println("Slave registered");
+            
             //Creating rebind service
             Timer timer = new Timer();   
-            RebindService rs = new RebindService(m, slaveRef, "SlaveLeonardo", slave.getUid());            
+            RebindService rs = new RebindService(m, slaveRef, SLAVE_NAME, slave.getUid());            
             timer.scheduleAtFixedRate(rs, 0, Configurations.REBIND_TIME);  // 0 = delay, REBIND_TIME = frequence
             
         
