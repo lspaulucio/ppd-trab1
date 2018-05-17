@@ -1,9 +1,8 @@
-package br.inf.ufes.ppd;
+package br.inf.ufes.ppd.cripto;
 
 import javax.crypto.*;
 import javax.crypto.spec.*;
 import java.io.*;
-import java.security.*;
 
 public class Encrypt {
 

@@ -1,11 +1,11 @@
-package br.inf.ufes.ppd;
+package br.inf.ufes.ppd.implementation;
 
+import br.inf.ufes.ppd.Guess;
+import br.inf.ufes.ppd.Slave;
+import br.inf.ufes.ppd.SlaveManager;
 import java.io.File;
 import java.io.IOException;
 import java.rmi.RemoteException;
-import java.rmi.registry.LocateRegistry;
-import java.rmi.registry.Registry;
-import java.rmi.server.UnicastRemoteObject;
 import java.util.*;
 import javax.crypto.Cipher;
 import javax.crypto.spec.SecretKeySpec;
@@ -14,11 +14,11 @@ import javax.crypto.spec.SecretKeySpec;
  *
  * @author Leonardo Santos Paulucio
  */
+
 public class SlaveImpl implements Slave {
 
     private static List<String> keys = new ArrayList<String>();
     private UUID uid;
-    private String name;
     private long currentIndex;
 
     public long getCurrentIndex() {
@@ -35,14 +35,6 @@ public class SlaveImpl implements Slave {
 
     public void setUid(UUID uid) {
         this.uid = uid;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
     }
     
     //Dictionary read function
@@ -75,11 +67,15 @@ public class SlaveImpl implements Slave {
             public void run()
             {
                 String KNOWN_TEXT = new String(knowntext);
-
-                final int CHECK_TIMER = 10; //10 seconds
-                Timer timer = new Timer();
+                
                 System.out.println("New Attack: " + attackNumber);
                 
+                //Making a timer to notify master about currentIndex
+                Timer timer = new Timer();
+
+//                CheckPointService checkServ = new CheckPointService(uid, attackNumber, currentIndex, callbackinterface);
+//                timer.scheduleAtFixedRate(checkServ, 0, Configurations.CHECKPOINT_TIME);  // 0 = delay, CHECK_TIMER = frequence
+
                 //Subattack execution
                 //Making a timer to notify master about currentIndex
                 timer.scheduleAtFixedRate(new TimerTask() {
@@ -94,9 +90,10 @@ public class SlaveImpl implements Slave {
 
                         }
                     }
-                }, 0, CHECK_TIMER*1000);  // 0 = delay, CHECK_TIMER = frequence in ms
+                }, 0, Configurations.CHECKPOINT_TIME);  // 0 = delay, CHECK_TIMER = frequence
                 //End Checkpoint timer
-                        
+                
+                //Subattack execution
                 for (currentIndex = initialwordindex; currentIndex < finalwordindex; currentIndex++) {
 
                     try {
@@ -133,7 +130,9 @@ public class SlaveImpl implements Slave {
                         System.err.println("Error startsubattack: " + e.getMessage());
                     }
                 }
-                timer.cancel(); //Finish task checkpoint
+                
+                timer.cancel(); //Closing task checkpoint
+                
                 try {
                     callbackinterface.checkpoint(uid, attackNumber, currentIndex); //End job sending last checkpoint            
                     System.out.println("Checkpoint " + currentIndex);
@@ -144,59 +143,5 @@ public class SlaveImpl implements Slave {
                 System.out.println("End subattack: " + attackNumber);
             }
         }.start();   
-    } 
-
-    public static void main(String[] args) {
-
-        final String DICTIONARY_PATH = "dictionary.txt";
-        final String REGISTRY_MASTER_NAME = "mestre";
-        final String REGISTRY_ADDRESS = "192.168.1.124";
-        final int REBIND_TIME = 30;
-        
-        //Creating a new Slave
-        SlaveImpl slave = new SlaveImpl();
-        slave.readDictionary(DICTIONARY_PATH);
-        slave.setName("SlaveLeonardo");
-        slave.setUid(UUID.randomUUID());
- 
-        try {
-            Registry registry = LocateRegistry.getRegistry(REGISTRY_ADDRESS);
-            Master m = (Master) registry.lookup(REGISTRY_MASTER_NAME);
-            
-            Slave slaveRef = (Slave) UnicastRemoteObject.exportObject(slave,0);
-        
-            Timer timer = new Timer();
-            
-            //Making a timer to reconnect to the master every 30 seconds
-            timer.scheduleAtFixedRate(new TimerTask() {
-                public void run() {
-                    try{
-                        //Trying to rebind on master
-                        m.addSlave(slaveRef, slave.getName(), slave.getUid());
-                        System.out.println("Registrado");
-                    }
-                    catch (Exception e){
-                        System.err.println("Master down " + e.getMessage());
-                        
-                        //Master down, so try to find another master on registry
-                        try {
-                           
-                            Registry registry = LocateRegistry.getRegistry(REGISTRY_ADDRESS);
-                            Master m = (Master) registry.lookup(REGISTRY_MASTER_NAME);
-                            m.addSlave(slaveRef, slave.getName(), slave.getUid());
-                        }
-                        catch (Exception p)
-                        {
-                            System.err.println("Master not found " + p.getMessage() );
-                        }
-                    }
-                }
-            }, 0, REBIND_TIME*1000);  // 0 = delay, REBIND_TIME = frequence in ms
-            
-        
-        } catch (Exception e) {
-            System.err.println("Slave exception: " + e.getMessage());
-            e.printStackTrace();
-        }        
-    }        
+    }         
 }
