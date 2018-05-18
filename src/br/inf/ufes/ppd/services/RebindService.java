@@ -3,6 +3,7 @@ package br.inf.ufes.ppd.services;
 import br.inf.ufes.ppd.Master;
 import br.inf.ufes.ppd.Slave;
 import br.inf.ufes.ppd.implementation.Configurations;
+import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.util.TimerTask;
@@ -35,7 +36,7 @@ public class RebindService extends TimerTask {
             masterRef.addSlave(slaveRef, slaveName, slaveUID);
             System.out.println("Slave rebind");
         }
-        catch (Exception e){
+        catch (RemoteException e){
             System.err.println("Master down. Error:\n" + e.getMessage());
 
             //Master down, so try to find another master on registry
@@ -46,8 +47,11 @@ public class RebindService extends TimerTask {
                 m.addSlave(slaveRef, slaveName, slaveUID);
                 masterRef = m; //Save new master reference
             }
-            catch (Exception p){
-                System.err.println("Master not found or not registered on registry. Error:\n " + p.getMessage());
+            catch (RemoteException p){
+                System.err.println("Master not found or not registered on registry. Error:\n" + p.getMessage());
+            }
+            catch (Exception a){
+                System.err.println("Rebind service error:\n" + a.getMessage());
             }
         }
     }

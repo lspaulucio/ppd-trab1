@@ -4,6 +4,7 @@ import br.inf.ufes.ppd.Guess;
 import br.inf.ufes.ppd.Master;
 import br.inf.ufes.ppd.implementation.Configurations;
 import java.io.*;
+import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.util.*;
@@ -70,9 +71,12 @@ public class Client {
             }
             
         }
-        catch(Exception e)
+        catch(RemoteException e)
         {
-            e.printStackTrace();
+            System.err.println("Client error:\n" + e.getMessage());
+        }
+        catch(Exception p){
+            System.err.println("Client error:\n" + p.getMessage());
         }
     
     }  

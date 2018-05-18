@@ -4,6 +4,7 @@ import br.inf.ufes.ppd.Guess;
 import br.inf.ufes.ppd.SlaveManager;
 import br.inf.ufes.ppd.cripto.Decrypt;
 import br.inf.ufes.ppd.implementation.Configurations;
+import java.rmi.RemoteException;
 import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -43,7 +44,7 @@ public class SubAttackService extends Thread {
         this.keys = keysList;
     }
     
-    class CheckPointTask extends TimerTask{
+    private class CheckPointTask extends TimerTask{
 
         @Override
         public void run() {
@@ -52,7 +53,7 @@ public class SubAttackService extends Thread {
                 smRef.checkpoint(uid, attackID, currentIndex);
                 System.out.println("Checkpoint " + currentIndex);
             }
-            catch (Exception e){
+            catch (RemoteException e){
                 System.err.println("Master down:\n" + e.getMessage());
             }
         }
@@ -112,7 +113,7 @@ public class SubAttackService extends Thread {
                 // essa excecao e jogada quando a senha esta incorreta
                 // porem nao quer dizer que a senha esta correta se nao jogar essa excecao
                 //System.err.println("Senha " + new String(key) + " invalida.");
-            } catch (Exception e) {
+            } catch (RemoteException e) {
                 System.err.println("Error subattack service:\n" + e.getMessage());
             }
         }
@@ -123,7 +124,7 @@ public class SubAttackService extends Thread {
             smRef.checkpoint(uid, attackID, currentIndex); //End job sending last checkpoint            
             System.out.println("Checkpoint " + currentIndex);
         }
-        catch (Exception e){
+        catch (RemoteException e){
             System.err.println("Subattack callback fail:\n" + e.getMessage());                
         }
         System.out.println("End subattack: " + attackID);

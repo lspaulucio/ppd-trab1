@@ -104,11 +104,10 @@ public class AttackerSerial {
             file.close();
             
         }catch (FileNotFoundException e) {
-            System.out.println(e.getMessage());
+            System.err.println(e.getMessage());
             
         }catch (Exception e){
-            //dont try this at home
-                e.printStackTrace();
+            System.err.println(e.getMessage());
         }
         
 //        readDictionary(DICTIONARY_PATH);

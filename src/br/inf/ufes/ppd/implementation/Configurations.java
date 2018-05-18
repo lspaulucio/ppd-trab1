@@ -12,6 +12,8 @@ public class Configurations {
     
     public static final String DICTIONARY_PATH = "dictionary.txt";
     
+    public static final int DICTIONARY_SIZE = 80368;
+    
     public static final int REBIND_TIME = 30000; //30 seconds
     public static final int CHECKPOINT_TIME = 10000; //10 seconds
 }

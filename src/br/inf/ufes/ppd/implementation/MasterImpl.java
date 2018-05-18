@@ -195,90 +195,186 @@ public class MasterImpl implements Master {
         System.out.println("Elapsed Time: " + elapsedTime);
     }
     
+    private class AttackTask extends Thread{
+
+        SlaveManager smRef;
+        int attackID;
+        Map<UUID, SlaveControl> slavesCopy;
+        byte[] encriptedText;
+        byte[] knownText;
+        
+        public AttackTask(SlaveManager callback, int attackNumber, Map<UUID, SlaveControl> slaves, 
+                          byte[] ciphertext, byte[] knowntext){
+            
+            this.smRef = callback;
+            this.attackID = attackNumber;
+            this.slavesCopy = slaves;
+            this.encriptedText = ciphertext;
+            this.knownText = knowntext;
+        }
+        
+        @Override
+        public void run() {
+            
+            List<UUID> failedSlaves = new ArrayList<>();
+            int dictionarySize = Configurations.DICTIONARY_SIZE; 
+            int indexDivision = dictionarySize / slavesCopy.size();
+            int initialIndex = 0; 
+            int finalIndex = indexDivision;
+
+            //Creating a guess list for this attack
+            synchronized(guessList){
+                guessList.put(attackID, new ArrayList<>());
+            }
+
+            for (UUID slaveID : slavesCopy.keySet()) {
+                
+                SlaveControl sc = slavesCopy.get(slaveID);
+                Slave slRef = sc.getSlaveRef();
+
+                try{
+                    slRef.startSubAttack(encriptedText, knownText, initialIndex, finalIndex, attackID, smRef);
+
+                    initialIndex = finalIndex;
+                    finalIndex += indexDivision;
+
+                    if(finalIndex > dictionarySize)
+                        finalIndex = dictionarySize;            
+                
+                }
+                catch(RemoteException e){
+                    failedSlaves.add(slaveID);
+                    System.err.println("Slave failed: " + slaveID + "Name: " + sc.getName());
+                }
+            
+            }//end of jobs distribuition
+
+            
+            ////////////////TERMINAR PARA FAZER REDISTRIBUICAO ///////////////////////////////
+
+            //verificar depois para caso que lista vazia e para redistribuir jobs qdo remover
+            if(failedSlaves.size() != 0){
+
+                Map<UUID, SlaveControl> slavesWorking;
+
+                synchronized(slaves){
+                    for (UUID uid : failedSlaves) {
+                        slaves.remove(uid);
+                    }
+
+                    slavesWorking = new HashMap<>(slaves);
+                }
+
+                for (UUID failedSlaveID : failedSlaves) {
+
+                    SlaveControl s = slavesCopy.get(failedSlaveID);
+                    Map<Integer, AttackControl> attackList = s.getAttackList();
+
+                    for (Integer attackID : attackList.keySet()) {
+                        AttackControl ac = attackList.get(attackID);
+
+                        if(!ac.isDone()){
+                        //tem q resolver o problema da criação do ataque
+                        //slRef.startSubAttack(ciphertext, knowntext, initialIndex, finalIndex, attackID, callback);
+                        }
+
+                    }
+
+                }
+
+
+            }
+        }
+        
+    }
+    
+    
     //Attacker interfaces
     @Override
     public Guess[] attack(byte[] ciphertext, byte[] knowntext) throws RemoteException {
-        final int dictionarySize = 80368;
-        SlaveManager callback = this;
         int attackID = getAttackNumber();
         Map<UUID, SlaveControl> slavesCopy;
         
         synchronized(slaves){
             for (SlaveControl sc : slaves.values()) {
+                
+                ///ARRUMAR ATACK CONTROL
                 sc.getAttackList().put(attackID, new AttackControl(1,1, System.currentTimeMillis()));
             }
             slavesCopy = new HashMap<>(slaves);
         }
         
-        new Thread(){        
-            public void run(){
-                
-                List<UUID> failedSlaves = new ArrayList<>();
-                int indexDivision = dictionarySize / slaves.size();
-                int initialIndex = 0; 
-                int finalIndex = initialIndex + indexDivision;
-
-                synchronized(guessList){
-                    guessList.put(attackID, new ArrayList<Guess>());
-                }
-                
-                for (UUID slaveID : slavesCopy.keySet()) {
-                    SlaveControl sc = slavesCopy.get(slaveID);
-                    Slave slRef = sc.getSlaveRef();
-                    
-                    try{
-                        slRef.startSubAttack(ciphertext, knowntext, initialIndex, finalIndex, attackID, callback);
-                    }
-                    catch(Exception e){
-                        failedSlaves.add(slaveID);
-                        System.err.println("Slave failed: " + slaveID);
-                    }
-                    
-                    initialIndex = initialIndex + indexDivision;
-                    finalIndex = initialIndex + indexDivision;
-
-                    if(finalIndex > dictionarySize)
-                        finalIndex = dictionarySize;            
-                }
-                
-                ////////////////TERMINAR PARA FAZER REDISTRIBUICAO ///////////////////////////////
-                
-                
-                //verificar depois para caso que lista vazia e para redistribuir jobs qdo remover
-                if(failedSlaves.size() != 0){
-                    
-                    Map<UUID, SlaveControl> slavesWorking;
-                    
-                    synchronized(slaves){
-                        for (UUID uid : failedSlaves) {
-                            slaves.remove(uid);
-                        }
-                        
-                        slavesWorking = new HashMap<>(slaves);
-                    }
-                    
-                    for (UUID failedSlaveID : failedSlaves) {
-                        
-                        SlaveControl s = slavesCopy.get(failedSlaveID);
-                        Map<Integer, AttackControl> attackList = s.getAttackList();
-                        
-                        for (Integer attackID : attackList.keySet()) {
-                            AttackControl ac = attackList.get(attackID);
-                            
-                            if(!ac.isDone()){
-                            //tem q resolver o problema da criação do ataque
-                            //slRef.startSubAttack(ciphertext, knowntext, initialIndex, finalIndex, attackID, callback);
-                            }
-                                
-                        }
-                        
-                    }
-                    
-
-                }
-            }
-        }.start();
+        Thread attack = new AttackTask(this, attackID, slavesCopy, ciphertext, knowntext);
+        attack.start();
         
+//        new Thread(){        
+//            public void run(){
+//                
+//                List<UUID> failedSlaves = new ArrayList<>();
+//                int indexDivision = dictionarySize / slaves.size();
+//                int initialIndex = 0; 
+//                int finalIndex = initialIndex + indexDivision;
+//
+//                synchronized(guessList){
+//                    guessList.put(attackID, new ArrayList<Guess>());
+//                }
+//                
+//                for (UUID slaveID : slavesCopy.keySet()) {
+//                    SlaveControl sc = slavesCopy.get(slaveID);
+//                    Slave slRef = sc.getSlaveRef();
+//                    
+//                    try{
+//                        slRef.startSubAttack(ciphertext, knowntext, initialIndex, finalIndex, attackID, callback);
+//                    }
+//                    catch(Exception e){
+//                        failedSlaves.add(slaveID);
+//                        System.err.println("Slave failed: " + slaveID);
+//                    }
+//                    
+//                    initialIndex = initialIndex + indexDivision;
+//                    finalIndex = initialIndex + indexDivision;
+//
+//                    if(finalIndex > dictionarySize)
+//                        finalIndex = dictionarySize;            
+//                }
+//                
+//                ////////////////TERMINAR PARA FAZER REDISTRIBUICAO ///////////////////////////////
+//                
+//                
+//                //verificar depois para caso que lista vazia e para redistribuir jobs qdo remover
+//                if(failedSlaves.size() != 0){
+//                    
+//                    Map<UUID, SlaveControl> slavesWorking;
+//                    
+//                    synchronized(slaves){
+//                        for (UUID uid : failedSlaves) {
+//                            slaves.remove(uid);
+//                        }
+//                        
+//                        slavesWorking = new HashMap<>(slaves);
+//                    }
+//                    
+//                    for (UUID failedSlaveID : failedSlaves) {
+//                        
+//                        SlaveControl s = slavesCopy.get(failedSlaveID);
+//                        Map<Integer, AttackControl> attackList = s.getAttackList();
+//                        
+//                        for (Integer attackID : attackList.keySet()) {
+//                            AttackControl ac = attackList.get(attackID);
+//                            
+//                            if(!ac.isDone()){
+//                            //tem q resolver o problema da criação do ataque
+//                            //slRef.startSubAttack(ciphertext, knowntext, initialIndex, finalIndex, attackID, callback);
+//                            }
+//                                
+//                        }
+//                        
+//                    }
+//                    
+//
+//                }
+//            }
+//        }.start();
         
         //Waiting end job
         

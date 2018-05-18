@@ -3,6 +3,7 @@ package br.inf.ufes.ppd.application;
 import br.inf.ufes.ppd.Master;
 import br.inf.ufes.ppd.implementation.Configurations;
 import br.inf.ufes.ppd.implementation.MasterImpl;
+import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
@@ -24,9 +25,8 @@ public class MasterServer {
 
             System.out.println("Master ready!");
             
-        } catch (Exception e) {
-            System.err.println("Master exception: " + e.toString());
-            e.printStackTrace();
+        } catch (RemoteException e) {
+            System.err.println("Master exception:\n" + e.getMessage());
         }
     }
 }

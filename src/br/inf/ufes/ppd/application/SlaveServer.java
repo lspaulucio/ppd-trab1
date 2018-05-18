@@ -5,6 +5,7 @@ import br.inf.ufes.ppd.Slave;
 import br.inf.ufes.ppd.implementation.Configurations;
 import br.inf.ufes.ppd.implementation.SlaveImpl;
 import br.inf.ufes.ppd.services.RebindService;
+import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
@@ -38,10 +39,12 @@ public class SlaveServer {
             RebindService rs = new RebindService(m, slaveRef, SLAVE_NAME, slave.getUid());            
             timer.scheduleAtFixedRate(rs, 0, Configurations.REBIND_TIME);  // 0 = delay, REBIND_TIME = frequence
             
-        
-        } catch (Exception e) {
-            System.err.println("Slave exception: " + e.getMessage());
-            e.printStackTrace();
-        }        
+        }
+        catch(RemoteException e) {
+            System.err.println("Slave exception:\n" + e.getMessage());
+        }
+        catch(Exception p){
+            System.err.println("Slave exception:\n" + p.getMessage());
+        }
     }
 }
