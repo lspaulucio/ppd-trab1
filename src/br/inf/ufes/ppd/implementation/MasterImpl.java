@@ -17,7 +17,7 @@ import java.util.UUID;
  */
 class AttackControl {
 
-    long currentCheck, lastCheck;
+    long currentIndex, lastIndex;
     boolean done;
     long startTime;
 
@@ -29,20 +29,20 @@ class AttackControl {
         this.startTime = startTime;
     }
 
-    public long getCurrentCheck() {
-        return currentCheck;
+    public long getCurrentIndex() {
+        return currentIndex;
     }
 
-    public void setCurrentCheck(long currentCheck) {
-        this.currentCheck = currentCheck;
+    public void setCurrentIndex(long currentCheck) {
+        this.currentIndex = currentCheck;
     }
 
-    public long getLastCheck() {
-        return lastCheck;
+    public long getLastIndex() {
+        return lastIndex;
     }
 
-    public void setLastCheck(long lastCheck) {
-        this.lastCheck = lastCheck;
+    public void setLastIndex(long lastCheck) {
+        this.lastIndex = lastCheck;
     }
 
     public boolean isDone() {
@@ -55,8 +55,8 @@ class AttackControl {
     
     AttackControl(long curr, long lc, long stTime)
     {
-        this.currentCheck = curr;
-        this.lastCheck = lc;
+        this.currentIndex = curr;
+        this.lastIndex = lc;
         this.startTime = stTime;
         this.done = false;     
     }
@@ -67,7 +67,6 @@ class SlaveControl {
     Slave slaveRef;
     String name;
     long time;
-    boolean busy;
     Map<Integer, AttackControl> attackList;
 
     public Slave getSlaveRef() {
@@ -94,14 +93,6 @@ class SlaveControl {
         this.time = time;
     }
 
-    public boolean isBusy() {
-        return busy;
-    }
-
-    public void setBusy(boolean busy) {
-        this.busy = busy;
-    }
-
     public Map<Integer, AttackControl> getAttackList() {
         return attackList;
     }
@@ -114,7 +105,6 @@ class SlaveControl {
         this.slaveRef = s;
         this.name = n;
         this.time = t;
-        this.busy = false;
         this.attackList = new HashMap<>();
     }
 }
@@ -140,6 +130,8 @@ public class MasterImpl implements Master {
             synchronized (slaves) {
                 slaves.put(slavekey, sc);
             }
+            
+            System.out.println("Slave: " + slaveName + " foi adicionado");
         }
 //        else{
 //            System.out.println("Client already exists!");
@@ -170,23 +162,16 @@ public class MasterImpl implements Master {
 
     @Override
     public void checkpoint(UUID slaveKey, int attackNumber, long currentindex) throws RemoteException {
+        
         SlaveControl s = slaves.get(slaveKey);
-        AttackControl attack = s.getAttackList().get(attackNumber);
-        
+        //Tomar cuidado com a hora q chega o checkpoint o tempo pode ser menor do q o na variavel
         s.setTime(System.currentTimeMillis()); //Registering current time of checkpoint of slave
-        attack.setCurrentCheck(currentindex);   //Updating currentIndex
         
-        if(attack.getCurrentCheck() == attack.getLastCheck()){
+        AttackControl attack = s.getAttackList().get(attackNumber);
+        attack.setCurrentIndex(currentindex);   //Updating currentIndex
+        
+        if(attack.getCurrentIndex() == attack.getLastIndex()){
             attack.setDone(true);
-            
-            boolean done = false;
-            
-            for (AttackControl at : s.getAttackList().values()) {
-                done = done && at.isDone();
-            }
-            
-            if(done == true)
-                s.setBusy(false);
         }       
         
         long elapsedTime = System.currentTimeMillis() - attack.getStartTime();
@@ -203,12 +188,10 @@ public class MasterImpl implements Master {
         byte[] encriptedText;
         byte[] knownText;
         
-        public AttackTask(SlaveManager callback, int attackNumber, Map<UUID, SlaveControl> slaves, 
-                          byte[] ciphertext, byte[] knowntext){
+        public AttackTask(SlaveManager callback, int attackNumber, byte[] ciphertext, byte[] knowntext){
             
             this.smRef = callback;
             this.attackID = attackNumber;
-            this.slavesCopy = slaves;
             this.encriptedText = ciphertext;
             this.knownText = knowntext;
         }
@@ -216,23 +199,35 @@ public class MasterImpl implements Master {
         @Override
         public void run() {
             
+            synchronized(slaves){
+                slavesCopy = new HashMap<>(slaves);
+            }
+            
             List<UUID> failedSlaves = new ArrayList<>();
             int dictionarySize = Configurations.DICTIONARY_SIZE; 
             int indexDivision = dictionarySize / slavesCopy.size();
             int initialIndex = 0; 
             int finalIndex = indexDivision;
-
+            long startTime = System.currentTimeMillis();
             //Creating a guess list for this attack
             synchronized(guessList){
                 guessList.put(attackID, new ArrayList<>());
             }
 
+            
             for (UUID slaveID : slavesCopy.keySet()) {
                 
                 SlaveControl sc = slavesCopy.get(slaveID);
                 Slave slRef = sc.getSlaveRef();
 
                 try{
+                    AttackControl currentAttack = new AttackControl(initialIndex, finalIndex, startTime);
+                    
+                    synchronized(slaves)
+                    {
+                        slaves.get(slaveID).getAttackList().put(attackID, currentAttack);
+                    }
+                    
                     slRef.startSubAttack(encriptedText, knownText, initialIndex, finalIndex, attackID, smRef);
 
                     initialIndex = finalIndex;
@@ -253,39 +248,37 @@ public class MasterImpl implements Master {
             ////////////////TERMINAR PARA FAZER REDISTRIBUICAO ///////////////////////////////
 
             //verificar depois para caso que lista vazia e para redistribuir jobs qdo remover
-            if(failedSlaves.size() != 0){
-
-                Map<UUID, SlaveControl> slavesWorking;
-
-                synchronized(slaves){
-                    for (UUID uid : failedSlaves) {
-                        slaves.remove(uid);
-                    }
-
-                    slavesWorking = new HashMap<>(slaves);
-                }
-
-                for (UUID failedSlaveID : failedSlaves) {
-
-                    SlaveControl s = slavesCopy.get(failedSlaveID);
-                    Map<Integer, AttackControl> attackList = s.getAttackList();
-
-                    for (Integer attackID : attackList.keySet()) {
-                        AttackControl ac = attackList.get(attackID);
-
-                        if(!ac.isDone()){
-                        //tem q resolver o problema da criação do ataque
-                        //slRef.startSubAttack(ciphertext, knowntext, initialIndex, finalIndex, attackID, callback);
-                        }
-
-                    }
-
-                }
-
-
-            }
+//            if(failedSlaves.size() != 0){
+//
+//                synchronized(slaves){
+//                    for (UUID uid : failedSlaves) {
+//                        slaves.remove(uid);
+//                    }
+//
+//                    //Getting the working slaves
+//                    slavesCopy = new HashMap<>(slaves);
+//                }
+//
+//                for (UUID failedSlaveID : failedSlaves) {
+//
+//                    SlaveControl s = slavesCopy.get(failedSlaveID);
+//                    Map<Integer, AttackControl> attackList = s.getAttackList();
+//
+//                    for (Integer attackID : attackList.keySet()) {
+//                        AttackControl ac = attackList.get(attackID);
+//
+//                        if(!ac.isDone()){
+//                        //tem q resolver o problema da criação do ataque
+//                        //slRef.startSubAttack(ciphertext, knowntext, initialIndex, finalIndex, attackID, callback);
+//                        }
+//
+//                    }
+//
+//                }
+//
+//
+//            }
         }
-        
     }
     
     
@@ -294,18 +287,14 @@ public class MasterImpl implements Master {
     public Guess[] attack(byte[] ciphertext, byte[] knowntext) throws RemoteException {
         int attackID = getAttackNumber();
         Map<UUID, SlaveControl> slavesCopy;
-        
-        synchronized(slaves){
-            for (SlaveControl sc : slaves.values()) {
-                
-                ///ARRUMAR ATACK CONTROL
-                sc.getAttackList().put(attackID, new AttackControl(1,1, System.currentTimeMillis()));
-            }
-            slavesCopy = new HashMap<>(slaves);
-        }
-        
-        Thread attack = new AttackTask(this, attackID, slavesCopy, ciphertext, knowntext);
+               
+        Thread attack = new AttackTask(this, attackID, ciphertext, knowntext);
         attack.start();
+        try {
+            attack.join();
+        } catch (InterruptedException ex) {
+            System.out.println("Aki");
+        }
         
 //        new Thread(){        
 //            public void run(){
@@ -383,10 +372,11 @@ public class MasterImpl implements Master {
         do{
             done = true;
             for (SlaveControl sc : slaves.values()) {
-
-                if(sc.getAttackList().get(attackID) != null)
-                    done = done && sc.getAttackList().get(attackID).isDone();
                 
+                AttackControl ac = sc.getAttackList().get(attackID);
+                
+                if(ac != null)
+                    done = done && ac.isDone();
             }
             
         }while(!done);

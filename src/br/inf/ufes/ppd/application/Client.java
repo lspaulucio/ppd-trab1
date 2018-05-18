@@ -44,15 +44,15 @@ public class Client {
         try {
             
             //Adicionar terceiro parametro
-            if(args[0] == null || args[1] == null){
-                System.err.println("Missing parameters");
-            }
+//            if(args[0] == null || args[1] == null){
+//                System.err.println("Missing parameters");
+//            }
             
-            String filename = args[0];
-            String knowText = args[1];
+            String filename = "desafio.cipher";// args[0];
+            String knowText = "JFIF";//args[1];
             
             byte[] encryptedText = readFile(filename);
-        
+            System.out.println("Teste");
             Registry registry = LocateRegistry.getRegistry(Configurations.REGISTRY_ADDRESS);
             Master m = (Master) registry.lookup(Configurations.REGISTRY_MASTER_NAME); 
             
@@ -73,10 +73,11 @@ public class Client {
         }
         catch(RemoteException e)
         {
-            System.err.println("Client error:\n" + e.getMessage());
+            System.err.println("Client remote error:\n" + e.getMessage());
         }
         catch(Exception p){
             System.err.println("Client error:\n" + p.getMessage());
+            p.printStackTrace();
         }
     
     }  

@@ -7,7 +7,7 @@ package br.inf.ufes.ppd.implementation;
 
 public class Configurations {
     
-    public static final String REGISTRY_ADDRESS = "192.168.1.101";
+    public static final String REGISTRY_ADDRESS = "192.168.1.4";
     public static final String REGISTRY_MASTER_NAME = "mestre";
     
     public static final String DICTIONARY_PATH = "dictionary.txt";

@@ -34,7 +34,7 @@ public class RebindService extends TimerTask {
             //Trying to rebind on master
 //            System.out.println("Cheguei");
             masterRef.addSlave(slaveRef, slaveName, slaveUID);
-            System.out.println("Slave rebind");
+            System.out.println("Slave registered");
         }
         catch (RemoteException e){
             System.err.println("Master down. Error:\n" + e.getMessage());
