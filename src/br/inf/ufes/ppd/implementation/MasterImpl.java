@@ -156,9 +156,14 @@ public class MasterImpl implements Master {
     private Map<Integer, AttackControl> attacksList = new HashMap<>();
     
     private int attackNumber = 0;
+    private int subAttackNumber = 0;
     
     public int getAttackNumber(){
         return attackNumber++;
+    }
+    
+    public int getSubAttackNumber(){
+        return subAttackNumber++;
     }
         
     //SlaveManager interfaces
@@ -239,7 +244,7 @@ public class MasterImpl implements Master {
         Map<UUID, SlaveControl> slavesWorking;
         byte[] encriptedText;
         byte[] knownText;
-        int subAttackNumber;
+ 
         
         public AttackTask(SlaveManager callback, int attackNumber, byte[] ciphertext, byte[] knowntext){
             
@@ -247,15 +252,10 @@ public class MasterImpl implements Master {
             this.attackID = attackNumber;
             this.encriptedText = ciphertext;
             this.knownText = knowntext;
-            this.subAttackNumber = 0;
             
             synchronized(slaves){
                 this.slavesWorking = new HashMap<>(slaves);
             }
-        }
-        
-        public int getSubAttackID() {
-            return subAttackNumber++;
         }
         
         @Override
@@ -267,6 +267,7 @@ public class MasterImpl implements Master {
             long initialIndex = 0; 
             long finalIndex = indexDivision + (dictionarySize % slavesWorking.size());
             long startTime = System.currentTimeMillis();
+            int subAttackID = 0;
             
             //Creating a guess list for this attack
             synchronized(guessList){
@@ -282,7 +283,7 @@ public class MasterImpl implements Master {
                 SlaveControl sc = slavesWorking.get(slaveID);
                 Slave slRef = sc.getSlaveRef();
                 
-                int subAttackID = getSubAttackID();
+                subAttackID = getSubAttackNumber();
                 
                 synchronized(attackMap){
                     attackMap.put(subAttackID, attackID);
@@ -320,77 +321,71 @@ public class MasterImpl implements Master {
             ////////////////TERMINAR PARA FAZER REDISTRIBUICAO ///////////////////////////////
 
 //            verificar depois para caso que lista vazia e para redistribuir jobs qdo remover
-//            if(!failedSlaves.isEmpty()){
-//
-//                synchronized(slaves){
-//                    for (UUID uid : failedSlaves.keySet()) {
-//                        slaves.remove(uid);
-//                    }
-//
-//                    //Getting the actual working slaves
-//                    slavesWorking = new HashMap<>(slaves);
-//                }
-//                
-//                List<AttackControl> stopedJobs = new ArrayList<>();
-//                
-//                for (UUID failedSlaveID : failedSlaves.keySet()) {
-//
-//                    SlaveControl s = failedSlaves.get(failedSlaveID);
-//                    Map<Integer, AttackControl> attackList = s.getAttackList();
-//                    
-//                    //Checking if some job of this slave didnt finish
-//                    for (Integer attackID : attackList.keySet()) {
-//                        
-//                        AttackControl ac = attackList.get(attackID);
-//
-//                        //if not, adding to stopedJobs list
-//                        if(!ac.isDone()){
-//                            stopedJobs.add(ac);
-//                        }
-//                    }
-//
-//                    for (AttackControl stopedJob : stopedJobs) {
-//                        long indexSize = stopedJob.getLastIndex() - stopedJob.getCurrentIndex();
-//                        long division = indexSize / slavesWorking.size();
-//                        long startIndex = 0; 
-//                        long endIndex = division + (indexSize % slavesWorking.size());
-//                        
-//                        for (UUID slaveID : slavesWorking.keySet()) {
-//                
-//                            SlaveControl sc = slavesWorking.get(slaveID);
-//                            Slave slRef = sc.getSlaveRef();
-//
-//                            try{
-//                                AttackControl currentAttack = new AttackControl(startIndex, endIndex, startTime);
-//
-//                                synchronized(slaves)
-//                                {
-//                                    slaves.get(slaveID).getAttackList().put(attackID, currentAttack);
-//                                    
-//                                }
-//
-//                                slRef.startSubAttack(encriptedText, knownText, startIndex, endIndex, attackID, smRef);
-//
-//                                startIndex = endIndex;
-//                                endIndex += indexDivision;
-//
-//                                if(endIndex > indexSize)
-//                                    endIndex = indexSize;            
-//
-//                            }
-//                            catch(RemoteException e){
-//                                failedSlaves.put(slaveID, sc);
-//                                System.err.println("Slave failed: " + slaveID + "Name: " + sc.getName());
-//                            }
-//
-//                        }//end of jobs distribuition
-//                        
-//                    }
-//
-//                }
-//
-//
-//            }
+            if(!failedSlaves.isEmpty()){
+                System.out.println("Akiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii");
+                
+                synchronized(slaves){
+                    for (UUID uid : failedSlaves.keySet()) {
+                        slaves.remove(uid);
+                    }
+
+                    //Getting the actual working slaves
+                    slavesWorking = new HashMap<>(slaves);
+                }
+                
+                for (UUID failedSlaveID : failedSlaves.keySet()) {
+
+                    SlaveControl s = failedSlaves.get(failedSlaveID);
+                    List<Integer> subAttacks = s.getSubAttackNumbersList();
+                    
+                    //Checking if some job of this slave didnt finish
+                    for (Integer subID : subAttacks) {
+                        int id = attackMap.get(subID);
+                        
+                        AttackControl ac = attacksList.get(id);
+                        SubAttackControl sub = ac.getSubAttacksMap().get(subID);
+                        
+                        //if not, adding to stopedJobs list
+                        if(!sub.isDone()){
+                            
+                            long indexSize = sub.getLastIndex() - sub.getCurrentIndex();
+                            long division = indexSize / slavesWorking.size();
+                            long startIndex = sub.getCurrentIndex(); 
+                            long endIndex = sub.getCurrentIndex() + division + (indexSize % slavesWorking.size());
+
+                            for (UUID slaveID : slavesWorking.keySet()) {
+
+                                SlaveControl sc = slavesWorking.get(slaveID);
+                                Slave slRef = sc.getSlaveRef();
+
+                                try{
+                                    synchronized(slaves)
+                                    {
+                                        slaves.get(slaveID).getSubAttackNumbersList().add(subID);
+                                    }
+
+                                    slRef.startSubAttack(encriptedText, knownText, startIndex, endIndex, subID, smRef);
+
+                                    startIndex = endIndex;
+                                    endIndex += division;
+
+                                    if(endIndex > sub.getLastIndex())
+                                        endIndex = sub.getLastIndex();            
+
+                                }
+                                catch(RemoteException e){
+                                    System.err.println("Redistribution failed:\n" + e.getMessage());
+                                }
+                            }//end of jobs distribuition
+                        }
+                        
+                        System.out.println("End redistribution");
+                    }
+                }
+            }
+            
+            
+            
         }
     }
     
@@ -414,7 +409,8 @@ public class MasterImpl implements Master {
         //Waiting end job
                 
         while(!attacksList.get(attackID).isDone());
-                
+        
+        System.out.println("End attack: " + attackID);
         //Return guess vector
         Guess[] guess = getGuessVector(guessList.get(attackID));
                                

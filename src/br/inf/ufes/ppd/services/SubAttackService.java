@@ -71,22 +71,6 @@ public class SubAttackService extends Thread {
         CheckPointTask checkTask = new CheckPointTask();
         timer.scheduleAtFixedRate(checkTask, 0, Configurations.CHECKPOINT_TIME);  // 0 = delay, CHECKPOINT_TIME = frequence
 
-//        //Making a timer to notify master about currentIndex
-//        timer.scheduleAtFixedRate(new TimerTask() {
-//            public void run() {
-//                try{
-//                    //Notify master about current index
-//                    smRef.checkpoint(uid, attackID, currentIndex);
-//                    System.out.println("Checkpoint " + currentIndex);
-//                }
-//                catch (Exception e){
-//                    System.err.println("Master down " + e.getMessage());
-//
-//                }
-//            }
-//        }, 0, Configurations.CHECKPOINT_TIME);  // 0 = delay, CHECK_TIMER = frequence
-//        //End Checkpoint timer
-
         //Subattack execution
         for (; currentIndex < finalIndex; currentIndex++) {
 
