@@ -9,10 +9,11 @@ import java.rmi.registry.Registry;
 import java.util.TimerTask;
 import java.util.UUID;
 
-/**
+/** Classe que realiza o serviço de rebind.
  *
  * @author Leonardo Santos Paulucio
  */
+
 public class RebindService extends TimerTask {
     
     private Master masterRef;
@@ -20,7 +21,13 @@ public class RebindService extends TimerTask {
     private String slaveName;
     private UUID slaveUID;
     
-    
+    /**
+     * Construtor do serviço de rebind.
+     * @param m referência para o mestre.
+     * @param s referência para o escravo.
+     * @param name nome do escravo.
+     * @param uid identificador unico do escravo.
+     */
     public RebindService(Master m, Slave s, String name, UUID uid){
         this.masterRef = m;
         this.slaveRef = s;
@@ -32,7 +39,6 @@ public class RebindService extends TimerTask {
                 
         try{
             //Trying to rebind on master
-//            System.out.println("Cheguei");
             masterRef.addSlave(slaveRef, slaveName, slaveUID);
             System.out.println("Slave registered");
         }

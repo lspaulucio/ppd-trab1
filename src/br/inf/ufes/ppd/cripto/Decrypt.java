@@ -8,8 +8,19 @@ import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
 import javax.crypto.spec.*;
 
+/**
+     * Descriptografador.
+     * @author Leonardo Santos Paulucio
+    */
+
 public class Decrypt {
         
+    /**
+     * Descriptografa uma mensagem com a chave dada.
+     * @param key Chave que será utilizada para descriptografar.
+     * @param message Mensagem que será descriptografada.
+     * @return Mensagem descriptografada.
+    */
     public static byte[] decrypter(byte[] key, byte[] message) throws BadPaddingException{
         
         byte[] decrypted = null;   
@@ -30,5 +41,4 @@ public class Decrypt {
         
         return decrypted;
     }
-
 }

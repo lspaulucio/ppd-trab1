@@ -10,7 +10,7 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.util.UUID;
 
-/**
+/** Classe responsável por executar o subAttack.
  *
  * @author Leonardo Santos Paulucio
  */
@@ -26,6 +26,21 @@ public class SubAttackService extends Thread {
     SlaveManager smRef;
     private List<String> keys;
         
+    /**
+     * Construtor do serviço de sub ataque.
+     * @param id identificador único do escravo.
+     * @param ciphertext Arquivo criptografado.
+     * @param knowntext Trecho conhecido do arquivo criptografado.
+     * @param initialwordindex Índice inicial do sub ataque.
+     * @param finalwordindex Índice final do sub ataque.
+     * @param attackNumber Número do sub ataque
+     * @param callbackinterface  Interface do mestre para chamada de
+     * checkpoint e foundGuess.
+     * @param keysList Lista com chaves do dicionário.
+     * @see CheckPointTask
+     * @see br.inf.ufes.ppd.services.RebindService
+     */
+    
     public SubAttackService(UUID id, 
                             byte[] ciphertext, 
                             byte[] knowntext, 
@@ -44,6 +59,10 @@ public class SubAttackService extends Thread {
         this.keys = keysList;
     }
     
+    /**
+     * Classe interna responsável por executar o serviço de checkpoint.
+     * @author Leonardo Santos Paulucio
+    */
     private class CheckPointTask extends TimerTask{
 
         @Override

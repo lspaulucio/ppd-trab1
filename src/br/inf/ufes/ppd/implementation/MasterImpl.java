@@ -150,9 +150,7 @@ public class MasterImpl implements Master {
 
     private Map<UUID, SlaveControl> slaves = new HashMap<>();
     private Map<Integer, List<Guess>> guessList = new HashMap<>();
-    
     private Map<Integer, Integer> attackMap = new HashMap<>();
-    
     private Map<Integer, AttackControl> attacksList = new HashMap<>();
     
     private int attackNumber = 0;
@@ -167,6 +165,13 @@ public class MasterImpl implements Master {
     }
         
     //SlaveManager interfaces
+    
+    /**
+     * Adiciona um escravo na lista.
+     * @param s Referência para o escravo.
+     * @param slaveName Nome do escravo.
+     * @param slavekey  Identificador único do escravo.
+     */
     @Override
     public void addSlave(Slave s, String slaveName, UUID slavekey) throws RemoteException {
         
@@ -180,18 +185,33 @@ public class MasterImpl implements Master {
             
             System.out.println("Slave: " + slaveName + " foi adicionado");
         }
-//        else{
-//            System.out.println("Client already exists!");
-//        }
+        else{
+            synchronized (slaves) {
+                slaves.get(slavekey).setTime(System.currentTimeMillis());
+            }
+            
+            System.out.println("Client already exists!");
+        }
     }
 
+    /**
+     * Remove um escravo da lista.
+     * @param slavekey  Identificador único do escravo que sera removido.
+     */
     @Override
     public void removeSlave(UUID slaveKey) throws RemoteException {
         synchronized (slaves) {
             slaves.remove(slaveKey);
         }
     }
-
+    
+    /**
+     * Guess encontrado. Chamado pelo escravo ao encontrar um guess.
+     * @param slaveKey  Identificador único do escravo.
+     * @param subAttackNumber Número do sub ataque.
+     * @param currentindex Índice atual do ataque.
+     * @param currentguess Guess encontrado.
+     */ 
     @Override
     public void foundGuess(UUID slaveKey, int subAttackNumber, long currentindex, Guess currentguess) throws RemoteException {
         
@@ -211,6 +231,13 @@ public class MasterImpl implements Master {
         System.out.println("Attack Number: " + attackID);
     }
 
+    /**
+     * Checkpoint. Chamado frequentemente pelo escravo
+     * informando o andamento do ataque
+     * @param slaveKey  Identificador único do escravo.
+     * @param subAttackNumber Número do sub ataque.
+     * @param currentindex Índice atual do ataque.
+     */ 
     @Override
     public void checkpoint(UUID slaveKey, int subAttackNumber, long currentindex) throws RemoteException {
         
@@ -391,6 +418,13 @@ public class MasterImpl implements Master {
     
     
     //Attacker interfaces
+    
+    /**
+     * Inicia um ataque. Chamado pelo cliente.
+     * @param ciphertext Mensagem criptografada.
+     * @param knowntext  Trecho conhecido da mensagem.
+     * @return Vetor de guess encontrados
+     */ 
     @Override
     public Guess[] attack(byte[] ciphertext, byte[] knowntext) throws RemoteException {
         
@@ -417,6 +451,11 @@ public class MasterImpl implements Master {
         return guess;
     }
 
+    /**
+     * Gera um vetor de Guess a partir de uma lista de Guess.
+     * @param g  Lista de guess.
+     * @return Vetor contendo os guess da lista.
+     */ 
     public Guess[] getGuessVector(List<Guess> g){
         
         Guess[] guessVector = new Guess[g.size()];

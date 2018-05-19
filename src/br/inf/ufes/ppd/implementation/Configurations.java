@@ -1,6 +1,6 @@
 package br.inf.ufes.ppd.implementation;
 
-/**
+/** Classe com as configurações padrões.
  *
  * @author Leonardo Santos Paulucio
  */

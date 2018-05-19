@@ -5,8 +5,19 @@ import javax.crypto.spec.*;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 
+/**
+     * Criptografador.
+     * @author Leonardo Santos Paulucio
+    */
+
 public class Encrypt {
 
+    /**
+     * Criptografa uma cadeia de bytes com a chave dada.
+     * @param key Chave que será utilizada para criptografar.
+     * @param message Mensagem que se deseja criptografar.   
+     * @return Mensagem criptografado.
+    */
     public static byte[] encrypter(byte[] key, byte[] message) throws BadPaddingException{    
         
         byte[] encrypted = null;   

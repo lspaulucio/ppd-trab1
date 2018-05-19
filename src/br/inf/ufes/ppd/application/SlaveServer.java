@@ -12,7 +12,7 @@ import java.rmi.server.UnicastRemoteObject;
 import java.util.Timer;
 import java.util.UUID;
 
-/**
+/** Slave Application
  *
  * @author Leonardo Santos Paulucio
  */

@@ -9,13 +9,18 @@ import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.util.*;
 
-/**
+/** Client Application
  *
  * @author Leonardo Santos Paulucio
  */
 
 public class Client {
     
+    /**
+     * Realiza a leitura de um arquivo.
+     * @param filename Nome do arquivo que se deseja ler.
+     * @return Vetor de bytes do arquivo lido.
+    */
     private static byte[] readFile(String filename) throws IOException
     {
         File file = new File(filename);
@@ -32,6 +37,11 @@ public class Client {
         return data;
     }
 
+    /**
+     * Salva um vetor de bytes em um arquivo.
+     * @param filename Nome do arquivo que será gerado.
+     * @param data Vetor de bytes a ser gravado.
+    */
     private static void saveFile(String filename, byte[] data) throws IOException
     {
         FileOutputStream out = new FileOutputStream(filename);

@@ -2,15 +2,9 @@ package br.inf.ufes.ppds;
 
 import br.inf.ufes.ppd.cripto.Decrypt;
 import java.io.*;
-import static java.lang.Thread.sleep;
 import java.util.*;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
-import javax.crypto.Cipher;
-import javax.crypto.spec.*;
-
-/**
+/** Attacker Serial Application
  *
  * @author Leonardo Santos Paulucio
  */
@@ -21,6 +15,11 @@ public class AttackerSerial {
     
     long currentIndex;
     
+    /**
+     * Realiza a leitura de um arquivo.
+     * @param filename Nome do arquivo que se deseja ler.
+     * @return Vetor de bytes do arquivo lido.
+    */
     private static byte[] readFile(String filename) throws IOException {
 
         File file = new File(filename);
@@ -40,6 +39,11 @@ public class AttackerSerial {
         return data;
     }
 
+    /**
+     * Realiza o salvamento de um vetor de bytes.
+     * @param filename Nome do arquivo que será gerado.
+     * @param data Vetor de bytes que se deseja salvar.
+    */
     private static void saveFile(String filename, byte[] data) throws IOException {
 
         FileOutputStream out = new FileOutputStream(filename);
@@ -47,7 +51,11 @@ public class AttackerSerial {
         out.close();
 
     }
-        
+    
+    /**
+     * Realiza a leitura do dicionário.
+     * @param filename Nome do arquivo de dicionario.
+    */
     private static void readDictionary(String filename){
 
         try{
