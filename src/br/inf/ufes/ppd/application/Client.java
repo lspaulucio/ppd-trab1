@@ -83,7 +83,7 @@ public class Client {
         }
         catch(RemoteException e)
         {
-            System.err.println("Client remote error:\n" + e.getMessage());
+            System.err.println("Client - Master remote error:\n" + e.getMessage());
         }
         catch(Exception p){
             System.err.println("Client error:\n" + p.getMessage());

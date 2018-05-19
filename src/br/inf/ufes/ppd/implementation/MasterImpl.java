@@ -9,6 +9,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.UUID;
 
 /**
@@ -18,8 +20,8 @@ import java.util.UUID;
 
 class SubAttackControl {
 
-    long currentIndex, lastIndex;
-    boolean done;
+    private long currentIndex, lastIndex;
+    private boolean done;
     
     public long getCurrentIndex() {
         return currentIndex;
@@ -55,9 +57,27 @@ class SubAttackControl {
 
 class AttackControl {
 
-    Map<Integer, SubAttackControl> subAttacksMap;
-    boolean done;
-    long startTime;
+    private Map<Integer, SubAttackControl> subAttacksMap;
+    private byte[] cipherMessage;
+    private byte[] knownText;
+
+    public byte[] getCipherMessage() {
+        return cipherMessage;
+    }
+
+    public void setCipherMessage(byte[] cipherMessage) {
+        this.cipherMessage = cipherMessage;
+    }
+
+    public byte[] getKnownText() {
+        return knownText;
+    }
+
+    public void setKnownText(byte[] knownText) {
+        this.knownText = knownText;
+    }
+    private boolean done;
+    private long startTime;
     
     public Map<Integer, SubAttackControl> getSubAttacksMap() {
         return subAttacksMap;
@@ -78,22 +98,25 @@ class AttackControl {
     public boolean isDone() {
         boolean finished = true;
         
-        for (SubAttackControl subAttack : subAttacksMap.values()) {
-            finished &= subAttack.isDone();
+        synchronized(subAttacksMap){
+        
+            for (SubAttackControl subAttack : subAttacksMap.values()) {
+                finished &= subAttack.isDone();
+            }
         }
         
-        setDone(finished);
-        
-        return done;
+        return finished;
     }
 
     public void setDone(boolean done) {
         this.done = done;
     }
     
-    AttackControl()
+    public AttackControl(byte[] cipher, byte[] known)
     {
-        this.startTime = System.currentTimeMillis();
+        this.cipherMessage = cipher;
+        this.knownText = known;
+        this.startTime = System.nanoTime();
         this.done = false;
         this.subAttacksMap = new HashMap<>();
     }
@@ -101,10 +124,10 @@ class AttackControl {
 
 class SlaveControl {
 
-    Slave slaveRef;
-    String name;
-    long time;
-    List<Integer> subAttackNumbersList;
+    private Slave slaveRef;
+    private String name;
+    private long time;
+    private List<Integer> subAttackNumbersList;
 
     public Slave getSlaveRef() {
         return slaveRef;
@@ -156,6 +179,24 @@ public class MasterImpl implements Master {
     private int attackNumber = 0;
     private int subAttackNumber = 0;
     
+    public MasterImpl(){
+        Timer t = new Timer();
+        MonitoringService ms = new MonitoringService(this);
+        t.scheduleAtFixedRate(ms, 0, Configurations.TIMEOUT);
+    }
+    
+    public boolean hasAttack(){
+        int numberAttacks = 0;
+        
+        synchronized(attacksList){
+            for (AttackControl attack : attacksList.values()) {
+                if(!attack.isDone())
+                    numberAttacks++;
+            }
+        }
+        return numberAttacks > 0;
+    }
+    
     public int getAttackNumber(){
         return attackNumber++;
     }
@@ -177,7 +218,7 @@ public class MasterImpl implements Master {
         
         //Checking if slave is already registered
         if (!slaves.containsKey(slavekey)) {
-            SlaveControl sc = new SlaveControl(s, slaveName, System.currentTimeMillis());
+            SlaveControl sc = new SlaveControl(s, slaveName, System.nanoTime());
             
             synchronized (slaves) {
                 slaves.put(slavekey, sc);
@@ -185,13 +226,9 @@ public class MasterImpl implements Master {
             
             System.out.println("Slave: " + slaveName + " foi adicionado");
         }
-        else{
-            synchronized (slaves) {
-                slaves.get(slavekey).setTime(System.currentTimeMillis());
-            }
-            
-            System.out.println("Client already exists!");
-        }
+//        else{
+//            System.out.println("Client already exists!");
+//        }
     }
 
     /**
@@ -223,12 +260,12 @@ public class MasterImpl implements Master {
             guessList.get(attackID).add(currentguess);
         }
         synchronized(slaves){
-            slaves.get(slaveKey).setTime(System.currentTimeMillis());
+            slaves.get(slaveKey).setTime(System.nanoTime());
         }
         
-        System.out.println("Slave: " + slaveName + " Found guess: " + currentguess.getKey() + " Current index: " + currentindex);
-        System.out.println(" Message: " + currentguess.getMessage());
         System.out.println("Attack Number: " + attackID);
+        System.out.println("Slave: " + slaveName + " Found guess: " + currentguess.getKey() + " Current index: " + currentindex);
+        System.out.println("Message: " + currentguess.getMessage());
     }
 
     /**
@@ -244,7 +281,7 @@ public class MasterImpl implements Master {
         int attackNumber = attackMap.get(subAttackNumber);
         
         SlaveControl s = slaves.get(slaveKey);
-        s.setTime(System.currentTimeMillis()); //Registering current time of checkpoint of slave
+        s.setTime(System.nanoTime()); //Registering current time of checkpoint of slave
         //Tomar cuidado com a hora q chega o checkpoint o tempo pode ser menor do q o na variavel
         //Arrumar no setTime;
         
@@ -257,11 +294,11 @@ public class MasterImpl implements Master {
             subAttack.setDone(true);
         }       
         
-        long elapsedTime = System.currentTimeMillis() - attack.getStartTime();
+        double elapsedTime = (System.nanoTime() - attack.getStartTime())/1000000000;
         
-        System.out.println("Slave: " + s.getName() + " checkpoint, current index: " + currentindex);
-        System.out.println("Attack Number: " + attackNumber);
-        System.out.println("Elapsed Time: " + elapsedTime);
+        System.out.println("Attack Number: "+ attackNumber + " Elapsed Time: " + elapsedTime);
+        System.out.println("Slave: " + s.getName() + " checkpoint.");
+        System.out.println("SubAttack " + subAttackNumber + " Status: " + currentindex + "/" + subAttack.getLastIndex());
     }
     
     private class AttackTask extends Thread{
@@ -293,131 +330,172 @@ public class MasterImpl implements Master {
             long indexDivision = dictionarySize / slavesWorking.size();
             long initialIndex = 0; 
             long finalIndex = indexDivision + (dictionarySize % slavesWorking.size());
-            long startTime = System.currentTimeMillis();
+            long startTime = System.nanoTime();
             int subAttackID = 0;
-            
-            //Creating a guess list for this attack
-            synchronized(guessList){
-                guessList.put(attackID, new ArrayList<>());
-            }
-            
-            synchronized(attacksList){
-                attacksList.put(attackID, new AttackControl());
-            }
             
             for (UUID slaveID : slavesWorking.keySet()) {
                 
-                SlaveControl sc = slavesWorking.get(slaveID);
-                Slave slRef = sc.getSlaveRef();
-                
-                subAttackID = getSubAttackNumber();
-                
-                synchronized(attackMap){
-                    attackMap.put(subAttackID, attackID);
-                }
-                
-                try{
-                    SubAttackControl currentSubAttack = new SubAttackControl(initialIndex, finalIndex);
+                if(initialIndex != finalIndex){
                     
-                    synchronized(attacksList){
-                        attacksList.get(attackID).getSubAttacksMap().put(subAttackID, currentSubAttack);
+                    SlaveControl sc = slavesWorking.get(slaveID);
+                    Slave slRef = sc.getSlaveRef();
+
+                    subAttackID = getSubAttackNumber();
+
+                    synchronized(attackMap){
+                        attackMap.put(subAttackID, attackID);
                     }
-                    
-                    synchronized(slaves)
-                    {
-                        slaves.get(slaveID).getSubAttackNumbersList().add(subAttackID);
+
+                    try{
+
+                        SubAttackControl currentSubAttack = new SubAttackControl(initialIndex, finalIndex);
+
+                        synchronized(attacksList){
+                            attacksList.get(attackID).getSubAttacksMap().put(subAttackID, currentSubAttack);
+                        }
+
+                        synchronized(slaves)
+                        {
+                            slaves.get(slaveID).getSubAttackNumbersList().add(subAttackID);
+                        }
+
+                        slRef.startSubAttack(encriptedText, knownText, initialIndex, finalIndex, subAttackID, smRef);
+
+                        System.out.println("SubAttack " + subAttackID + " created. Index range: " + initialIndex + "/" + finalIndex);
+                        
+                        initialIndex = finalIndex;
+                        finalIndex += indexDivision;
+
+                        if(finalIndex > dictionarySize)
+                            finalIndex = dictionarySize;            
+
                     }
-                    
-                    slRef.startSubAttack(encriptedText, knownText, initialIndex, finalIndex, subAttackID, smRef);
+                    catch(RemoteException e){
+                        failedSlaves.put(slaveID, sc);
+                        
+                        System.err.println("Slave failed: " + slaveID + " Name: " + sc.getName());
 
-                    initialIndex = finalIndex;
-                    finalIndex += indexDivision;
+                        //Adjusting index for next slave
+                        initialIndex = finalIndex;
+                        finalIndex += indexDivision;
 
-                    if(finalIndex > dictionarySize)
-                        finalIndex = dictionarySize;            
-                
-                }
-                catch(RemoteException e){
-                    failedSlaves.put(slaveID, sc);
-                    System.err.println("Slave failed: " + slaveID + "Name: " + sc.getName());
-                }
-            
-            }//end of jobs distribuition
-
+                        if(finalIndex > dictionarySize)
+                            finalIndex = dictionarySize;            
+                    }
+                }//end of jobs distribuition
+            }
             
             ////////////////TERMINAR PARA FAZER REDISTRIBUICAO ///////////////////////////////
 
 //            verificar depois para caso que lista vazia e para redistribuir jobs qdo remover
             if(!failedSlaves.isEmpty()){
-                System.out.println("Akiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii");
                 
-                synchronized(slaves){
-                    for (UUID uid : failedSlaves.keySet()) {
-                        slaves.remove(uid);
+                for (UUID uid : failedSlaves.keySet()) {
+                    try{ 
+                        removeSlave(uid); 
                     }
-
-                    //Getting the actual working slaves
+                    catch(RemoteException e){ 
+                        System.err.println("Attack Task error:\n" + e.getMessage());
+                    }
+                }
+                
+                //Getting the actual working slaves
+                synchronized(slaves){
                     slavesWorking = new HashMap<>(slaves);
                 }
                 
-                for (UUID failedSlaveID : failedSlaves.keySet()) {
-
-                    SlaveControl s = failedSlaves.get(failedSlaveID);
-                    List<Integer> subAttacks = s.getSubAttackNumbersList();
-                    
-                    //Checking if some job of this slave didnt finish
-                    for (Integer subID : subAttacks) {
-                        int id = attackMap.get(subID);
-                        
-                        AttackControl ac = attacksList.get(id);
-                        SubAttackControl sub = ac.getSubAttacksMap().get(subID);
-                        
-                        //if not, adding to stopedJobs list
-                        if(!sub.isDone()){
-                            
-                            long indexSize = sub.getLastIndex() - sub.getCurrentIndex();
-                            long division = indexSize / slavesWorking.size();
-                            long startIndex = sub.getCurrentIndex(); 
-                            long endIndex = sub.getCurrentIndex() + division + (indexSize % slavesWorking.size());
-
-                            for (UUID slaveID : slavesWorking.keySet()) {
-
-                                SlaveControl sc = slavesWorking.get(slaveID);
-                                Slave slRef = sc.getSlaveRef();
-
-                                try{
-                                    synchronized(slaves)
-                                    {
-                                        slaves.get(slaveID).getSubAttackNumbersList().add(subID);
-                                    }
-
-                                    slRef.startSubAttack(encriptedText, knownText, startIndex, endIndex, subID, smRef);
-
-                                    startIndex = endIndex;
-                                    endIndex += division;
-
-                                    if(endIndex > sub.getLastIndex())
-                                        endIndex = sub.getLastIndex();            
-
-                                }
-                                catch(RemoteException e){
-                                    System.err.println("Redistribution failed:\n" + e.getMessage());
-                                }
-                            }//end of jobs distribuition
-                        }
-                        
-                        System.out.println("End redistribution");
-                    }
-                }
+                redistributionJobs(failedSlaves, slavesWorking, smRef);
             }
-            
-            
-            
         }
     }
     
+    public void redistributionJobs(Map<UUID, SlaveControl> failedSlaves, Map<UUID, SlaveControl> slavesWorking, SlaveManager smRef){
+        
+        //Checking if there are slaves registered.
+//        while(slavesWorking.isEmpty()){
+//            System.out.println("Waiting for slave to get added for redistribution");
+//            try {
+//                Thread.sleep(10000);
+//                synchronized(slaves){
+//                    slavesWorking = new HashMap<>(slaves);
+//                }
+//            } catch (InterruptedException ex) {
+//                System.err.println("Attack waiting for slaves error.\n" + ex.getMessage());
+//            }
+//        }
+        System.out.println("Starting redistribution");
+        
+        for (UUID failedSlaveID : failedSlaves.keySet()) {
+            int subAttackID;
+            SlaveControl s = failedSlaves.get(failedSlaveID);
+            List<Integer> subAttacks = s.getSubAttackNumbersList();
+
+            //Checking if some job of this slave didnt finish
+            for (Integer subID : subAttacks) {
+                int mainAttackID = attackMap.get(subID);
+
+                AttackControl actualAttack = attacksList.get(mainAttackID);
+                SubAttackControl sub = actualAttack.getSubAttacksMap().get(subID);
+
+                //if not do redistribution
+                if(!sub.isDone()){
+
+                    long indexSize = sub.getLastIndex() - sub.getCurrentIndex();
+                    long division = indexSize / slavesWorking.size();
+                    long startIndex = sub.getCurrentIndex(); 
+                    long endIndex = sub.getCurrentIndex() + division + (indexSize % slavesWorking.size());
+
+                    for (UUID slaveID : slavesWorking.keySet()) {
+
+                        if(startIndex != endIndex){
+
+                            subAttackID = getSubAttackNumber();
+                            SlaveControl sc = slavesWorking.get(slaveID);
+                            Slave slRef = sc.getSlaveRef();
+
+                            try{
+                                SubAttackControl newSub = new SubAttackControl(startIndex, endIndex);
+
+                                synchronized(slaves)
+                                {
+                                    slaves.get(slaveID).getSubAttackNumbersList().add(subAttackID);
+                                }
+
+                                synchronized(attacksList){
+                                    actualAttack.getSubAttacksMap().put(subAttackID, newSub);
+                                }
+
+                                synchronized(attackMap){
+                                    attackMap.put(subAttackID, mainAttackID);
+                                }
+
+                                slRef.startSubAttack(actualAttack.getCipherMessage(), actualAttack.getKnownText(), 
+                                                     startIndex, endIndex, subAttackID, smRef);
+
+                                System.out.println("SubAttack " + subAttackID + " created. Index range: " + startIndex + "/" + endIndex);
+                                
+                                startIndex = endIndex;
+                                endIndex += division;
+
+                                if(endIndex > sub.getLastIndex())
+                                    endIndex = sub.getLastIndex();            
+                            }
+                            catch(RemoteException e){
+                                System.err.println("Redistribution failed:\n" + e.getMessage());
+                            }
+                        }   
+                    }//end of jobs redistribution
+                }
+
+                synchronized(attacksList){
+                    sub.setDone(true);
+                }
+            }
+        }
+        System.out.println("End redistribution.");
+    }
     
-    //Attacker interfaces
+    /////////Attacker interfaces
     
     /**
      * Inicia um ataque. Chamado pelo cliente.
@@ -429,8 +507,27 @@ public class MasterImpl implements Master {
     public Guess[] attack(byte[] ciphertext, byte[] knowntext) throws RemoteException {
         
         int attackID = getAttackNumber();
-        Map<UUID, SlaveControl> slavesCopy;
-               
+        
+        //Creating a guess list for this attack
+        synchronized(guessList){
+            guessList.put(attackID, new ArrayList<>());
+        }
+
+        //Creating an attackControl for this attack
+        synchronized(attacksList){
+            attacksList.put(attackID, new AttackControl(ciphertext, knowntext));
+        }
+        
+        //Checking if there are slaves registered.
+        while(slaves.isEmpty()){
+            System.out.println("Waiting for slave to get added");
+            try {
+                Thread.sleep(5000);
+            } catch (InterruptedException ex) {
+                System.err.println("Attack waiting for slaves error.\n" +ex.getMessage());
+            }
+        }
+        
         Thread attack = new AttackTask(this, attackID, ciphertext, knowntext);
         attack.start();
         
@@ -441,9 +538,24 @@ public class MasterImpl implements Master {
         }
         
         //Waiting end job
-                
-        while(!attacksList.get(attackID).isDone());
+        boolean done;
+        do{
+            synchronized(attacksList){
+                done = attacksList.get(attackID).isDone();
+            }
+            
+            try{
+                Thread.sleep(5000);
+            }
+            catch(InterruptedException e){
+                System.err.println("Sleep done job error:\n" + e.getMessage());
+            }
+        }
+        while(!done);
         
+        synchronized(attacksList){
+            attacksList.get(attackID).setDone(true);
+        }
         System.out.println("End attack: " + attackID);
         //Return guess vector
         Guess[] guess = getGuessVector(guessList.get(attackID));
@@ -465,5 +577,53 @@ public class MasterImpl implements Master {
         }
         
         return guessVector;
+    }
+    
+    public class MonitoringService extends TimerTask{
+        
+        SlaveManager callback;
+        
+        public MonitoringService(SlaveManager sm){
+            this.callback = sm;
+        }
+        
+        @Override
+        public void run() {
+
+            if(hasAttack()){
+                Map<UUID, SlaveControl> downSlaves = new HashMap<>();
+                Map<UUID, SlaveControl> slavesCopy;
+            
+                long currentTime = System.nanoTime();
+            
+                synchronized(slaves){
+                        slavesCopy = new HashMap<>(slaves);
+                    }
+                
+                for (UUID id : slavesCopy.keySet()) {
+                    SlaveControl slave = slavesCopy.get(id);
+                    long elapsedTime = (currentTime - slave.getTime())/1000000000;
+
+                    if(elapsedTime > 20){
+                        downSlaves.put(id, slave);
+                        try{
+                            removeSlave(id);
+                        }
+                        catch(RemoteException e){
+                            System.err.println("Monitorign error:\n" + e.getMessage());
+                        }
+                    }
+                }
+            
+                if(!downSlaves.isEmpty()){
+                    
+                    synchronized(slaves){
+                        slavesCopy = new HashMap<>(slaves);
+                    }
+
+                    redistributionJobs(downSlaves, slavesCopy, callback);
+                }
+            }
+        }
     }
 }

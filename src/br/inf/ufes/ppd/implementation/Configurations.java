@@ -16,4 +16,5 @@ public class Configurations {
     
     public static final int REBIND_TIME = 30000; //30 seconds
     public static final int CHECKPOINT_TIME = 10000; //10 seconds
+    public static final int TIMEOUT = 20000; //20 seconds
 }
