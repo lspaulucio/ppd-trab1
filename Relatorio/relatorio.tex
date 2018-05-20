@@ -1,0 +1,292 @@
+\documentclass[
+	% -- opções da classe memoir --
+	12pt,				% tamanho da fonte
+	% openright,			% capítulos começam em pág ímpar (insere página vazia caso preciso)
+    oneside,			% para impressão somente frente. Oposto a twoside (frente e verso)
+	a4paper,			% tamanho do papel. 
+	% -- opções da classe abntex2 --
+	%chapter=TITLE,		% títulos de capítulos convertidos em letras maiúsculas
+	%section=TITLE,		% títulos de seções convertidos em letras maiúsculas
+	%subsection=TITLE,	% títulos de subseções convertidos em letras maiúsculas
+	%subsubsection=TITLE,% títulos de subsubseções convertidos em letras maiúsculas
+	% -- opções do pacote babel --
+	english,			% idioma adicional para hifenização
+	%french,				% idioma adicional para hifenização
+	%spanish,			% idioma adicional para hifenização
+	brazil,				% o último idioma é o principal do documento
+	]{abntex2}
+
+
+% ---
+% PACOTES
+% ---
+
+% ---
+% Pacotes fundamentais 
+% ---
+\usepackage{cmap}				% Mapear caracteres especiais no PDF
+\usepackage{lmodern}			% Usa a fonte Latin Modern
+%\usepackage{helvet}			% Usa a fonte helvet(ARIAL)
+%\usepackage{pslatex}			
+\usepackage[T1]{fontenc}		% Selecao de codigos de fonte.
+\usepackage[utf8]{inputenc}		% Codificacao do documento (conversão automática dos acentos)
+\usepackage{indentfirst}		% Indenta o primeiro parágrafo de cada seção.
+\usepackage{color}				% Controle das cores
+\usepackage{graphicx}			% Inclusão de gráficos
+\usepackage{enumerate}
+
+% ---
+% Pacotes adicionais, usados no anexo do modelo de folha de identificação
+% ---
+\usepackage{multicol}
+\usepackage{multirow}
+% ---
+	
+% ---
+% Pacotes adicionais, usados apenas no âmbito do Modelo Canônico do abnteX2
+% ---
+\usepackage{lipsum}				% para geração de dummy text
+% ---
+
+% ---
+% Pacotes de citações
+% ---
+\usepackage[brazilian,hyperpageref]{backref}	 % Paginas com as citações na bibl
+\usepackage[alf]{abntex2cite}	% Citações padrão ABNT
+
+% --- 
+% CONFIGURAÇÕES DE PACOTES
+% --- 
+
+% ---
+% Configurações do pacote backref
+% Usado sem a opção hyperpageref de backref
+\renewcommand{\backrefpagesname}{Citado na(s) página(s):~}
+% Texto padrão antes do número das páginas
+\renewcommand{\backref}{}
+% Define os textos da citação
+\renewcommand*{\backrefalt}[4]{
+	\ifcase #1 %
+		Nenhuma citação no texto.%
+	\or
+		Citado na página #2.%
+	\else
+		Citado #1 vezes nas páginas #2.%
+	\fi}%
+% ---
+
+% ---
+% Informações de dados para CAPA e FOLHA DE ROSTO
+% ---
+\titulo{Relatório do 1º Trabalho de Processamento Paralelo e Distribuído}
+\autor{Leonardo Santos Paulucio}
+\local{Vitória - ES}
+\data{22 de Maio de 2018}
+\instituicao{%
+  Universidade Federal do Espírito Santo
+  %\par
+  %Setor Palotina
+  \par
+  Engenharia da Computação}
+\tipotrabalho{Relatório técnico}
+% O preambulo deve conter o tipo do trabalho, o objetivo, 
+% o nome da instituição e a área de concentração 
+\preambulo{Trabalho apresentado à disciplina de Processamento Paralelo e Distribuído do curso Engenharia da Computação da Universidade Federal do Espírito Santo como requisito parcial de avaliação.
+\newline \newline \textbf{Professor:} João Paulo A. Almeida}
+
+% ---
+
+% ---
+% Configurações de aparência do PDF final
+
+% alterando o aspecto da cor azul
+%\definecolor{blue}{RGB}{41,5,195}
+\definecolor{blue}{RGB}{0,0,0}
+
+% informações do PDF
+\makeatletter
+\hypersetup{
+     	%pagebackref=true,
+		pdftitle={\@title}, 
+		pdfauthor={\@author},
+    	pdfsubject={\imprimirpreambulo},
+	    pdfcreator={LaTeX with abnTeX2},
+		pdfkeywords={abnt}{latex}{abntex}{abntex2}{relatório técnico}, 
+		colorlinks=true,       		% false: boxed links; true: colored links
+    	linkcolor=blue,          	% color of internal links
+    	citecolor=blue,        		% color of links to bibliography
+    	filecolor=magenta,      		% color of file links
+		urlcolor=blue,
+		bookmarksdepth=4
+}
+\makeatother
+% --- 
+
+% --- 
+% Espaçamentos entre linhas e parágrafos 
+% --- 
+
+% O tamanho do parágrafo é dado por:
+\setlength{\parindent}{1.3cm}
+
+% Controle do espaçamento entre um parágrafo e outro:
+\setlength{\parskip}{0.2cm}  % tente também \onelineskip
+
+% ---
+% compila o indice
+% ---
+\makeindex
+% ---
+
+% ----
+% Início do documento
+% ----
+\begin{document}
+
+% Retira espaço extra obsoleto entre as frases.
+\frenchspacing 
+
+% ----------------------------------------------------------
+% ELEMENTOS PRÉ-TEXTUAIS
+% ----------------------------------------------------------
+% \pretextual
+
+% ---
+% Capa
+% ---
+\imprimircapa
+% ---
+
+% ---
+% Folha de rosto
+% (o * indica que haverá a ficha bibliográfica)
+% ---
+\imprimirfolhaderosto*
+% ---
+
+% ---
+% RESUMO
+% ---
+
+% resumo na língua vernácula (obrigatório)
+% \begin{resumo} %% AQUI COMEÇA A PÁGINA DE RESUMO
+% Costuma-se dizer que, numa economia capitalista, os problemas econômicos relativos à decisão sobre que tipos de produtos devem ser produzidos e a que preços serão vendidos esses produtos são resolvidos normalmente pelo livre jogo das forças de mercado – isto é, pelo livre funcionamento da oferta e da demanda. Nesta hipótese, as decisões e escolhas econômicas são individualizadas e feitas pelos consumidores – que são os demandantes dos bens e serviços – e pelos produtores – que são os ofertantes. Agindo de acordo com seus próprios interesses, os indivíduos, afetando e sendo afetados pelo sistema de preços, tomam as decisões que maximizarão a satisfação coletiva. 
+% O objetivo é o de explicar de maneira simplificada como atua um sistema de preços e sua influência na alocação de recursos escassos.
+% Ocorre, porém, que a determinação do preço e da quantidade produzida de um bem ou serviço depende essencialmente do número de agentes econômicos – demandantes e ofertantes – existentes nesse mercado. Por isso, é interessante caracterizar, antes, os diversos tipos de mercado existentes.
+% O mercado, como você sabe, é o local onde se encontram os vendedores e compradores de determinados bens e serviços. Antigamente, a palavra mercado tinha uma conotação estritamente geográfica, mas isso já está deixando de ser assim. Hoje, com os avanços tecnológicos nas comunicações, as transações econômicas podem se realizar sem contato pessoal direto entre comprador e vendedor, tal como ocorre nas compras e vendas pela internet.
+
+
+%  \vspace{\onelineskip}
+    
+%  \noindent
+%  \textbf{Palavras-chaves}: latex. abntex. editoração de texto.
+% \end{resumo} %AQUI TERMINA A PÁGINA DE RESUMO
+% ---
+
+% ---
+% inserir lista de ilustrações
+% ---
+
+%\listoffigures* %% o * indica que não será incluso no sumário
+%\cleardoublepage %% Pula página
+% ---
+
+% ---
+% inserir lista de tabelas
+% ---
+
+%\listoftables*
+%\cleardoublepage
+% ---
+
+% ---
+% inserir lista de abreviaturas e siglas
+% ---
+%\begin{siglas}
+%  \item[Fig.] Area of the $i^{th}$ component
+%  \item[456] Isto é um número
+%  \item[123] Isto é outro número
+%  \item[lauro cesar] este é o meu nome
+%\end{siglas}
+% ---
+
+% ---
+% inserir lista de símbolos
+% ---
+%\begin{simbolos}
+%  \item[$ \Gamma $] Letra grega Gama
+%  \item[$ \Lambda $] Lambda
+%  \item[$ \zeta $] Letra grega minúscula zeta
+%  \item[$ \in $] Pertence
+%\end{simbolos}
+% ---
+
+% ---
+% inserir o sumario
+% ---
+
+\tableofcontents*
+
+% ---
+
+% ----------------------------------------------------------
+% ELEMENTOS TEXTUAIS  (necessário para incluir número nas páginas)
+% ----------------------------------------------------------
+\textual
+
+
+% MONTELLA. MAURA. Micro e Macroeconomia: Uma Abordagem Conceitual e Prática. Edição nº 01 - Editora Atlas, São Paulo – SP, 2009.
+
+% MANKIW, N. Gregory. Princípios da Microeconomia. Tradução Edição n.º 03 Norte-Americana – Editora Pioneira Thomson Learning, 2005.
+
+% BEGG. David K. H. Introdução à Microeconomia. Edição n.º 02 – Editora Campus, Rio de Janeiro, Elsevier, 2003.
+
+% VARIAN. Hal R, Microeconomia: Princípios Básicos. Edição n.º 06 – Editora Campus, São Paulo-SP, 2002.
+
+
+% ----------------------------------------------------------
+% Introdução
+% ----------------------------------------------------------
+\chapter{Introdução} 
+Nas últimas décadas houve uma crescente demanda na área de processamento de dados, o que exigiu o desenvolvimento de máquinas
+mais poderosas. Porém, apesar da grande capacidade existentes nos novos computadores quando comparados aos primeiros a serem produzidos e até mesmo a computadores de uma década atrás principalmente ao se analisar capacidade de processamento e memória, eles ainda não são capazes de atender essas demandas de processamentos sozinhos. Por esse motivo foram desenvolvidas várias técnicas de concorrência o que contribuiu para a criação dos Sistemas Distribuídos.
+
+%Um Sistema Distribuído é um sistema onde os componentes de \textit{hardware} ou \textit{software} se localizam em regiões físicas diferentes mas estão interligados em rede de forma que consigam se comunicar e coordenar suas ações entre sí.
+
+Esse trabalho tem por objetivo praticar programação paralela usando o \textit{middleware} JavaRMI e realizar a análise de desempenho em um cluster de computadores. Ele consistirá na implementação de uma arquitetura mestre/escravo para realizar um ataque de dicionário em uma mensagem criptografada.
+
+
+\chapter{Implementação} 
+
+\chapter{Interoperabilidade}
+Grupo do David
+Grupo do André
+Grupo do Eduardo e Gustavo
+
+\chapter{Análise} 
+
+% Conclusão
+% ---
+\chapter*[Conclusão]{Conclusão}
+\addcontentsline{toc}{chapter}{Conclusão}
+
+Ao final desse trabalho pode-se concluir que existem diferentes estruturas de mercado, cada uma com suas próprias características e dinâmicas que acabam sendo diretamente responsáveis pela forma como são estabelecidos os preços e as ofertas dos bens e serviços para o mercado.
+
+Foi possível perceber também que o modelo "ideal" para todos seria o modelo de concorrência perfeita, onde nenhuma empresa ou consumidor seria capaz de exercer influência sobre os preços ou quantidades dos produtos, porém viu-se que esse modelo acaba por não existir no mundo real.
+
+Portanto, o estudo da forma como o mercado está estruturado é de extrema importância para se conseguir compreender a dinâmica dos preços e da oferta de um determinado produto. Além disso, o conhecimento dessas esturutras permite que um futuro empresário possa conhecer as dificuldades(barreiras) que irá encontrar para ingressar no mercado, podendo assim analisar se irá valer a pena ou não abrir um negócio em um determinado local.
+
+
+
+% ----------------------------------------------------------
+% ELEMENTOS PÓS-TEXTUAIS
+% ----------------------------------------------------------
+\postextual
+
+
+% ----------------------------------------------------------
+% Referências bibliográficas
+% ----------------------------------------------------------
+\bibliography{referencias} %% REFERENCIA AO ARQUIVO .bib
+
+\end{document}
