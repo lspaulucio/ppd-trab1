@@ -140,7 +140,7 @@ class SlaveControl {
     public List<Integer> getSubAttackNumbersList() {
         return subAttackNumbersList;
     }
-        
+    
     SlaveControl(Slave s, String n, long t) {
         this.slaveRef = s;
         this.name = n;
@@ -163,6 +163,20 @@ public class MasterImpl implements Master {
         Timer t = new Timer();
         MonitoringService ms = new MonitoringService(this);
         t.scheduleAtFixedRate(ms, 0, Configurations.TIMEOUT);
+    }
+    
+    public SubAttackControl getSubAttackControl(int subAttackID){
+        int mainAttackID;
+        SubAttackControl sub;
+        
+        synchronized(attackMap){
+            mainAttackID = attackMap.get(subAttackID);
+        }
+        
+        synchronized(attacksList){
+            sub = attacksList.get(mainAttackID).getSubAttacksMap().get(subAttackID);
+        }
+        return sub;
     }
     
     public boolean hasAttack(){
@@ -245,7 +259,8 @@ public class MasterImpl implements Master {
         }
         
         System.out.println("Attack Number: " + attackID);
-        System.out.println("Slave: " + slaveName + " found guess: " + currentguess.getKey() + ". Current index: " + currentindex);
+        System.out.println("Slave: " + slaveName + " found guess: " + currentguess.getKey() + 
+                           ". Current index: " + currentindex);
         System.out.println("Message: " + currentguess.getMessage());
     }
 
@@ -271,7 +286,7 @@ public class MasterImpl implements Master {
         
         double elapsedTime = (System.nanoTime() - attack.getStartTime())/1000000000;
         
-        System.out.println("Attack Number: "+ attackNumber + " Elapsed Time: " + elapsedTime);
+        System.out.println("Attack Number: "+ attackNumber + " Elapsed Time: " + elapsedTime + "s");
         System.out.println("Slave: " + s.getName() + " checkpoint.");
         System.out.println("SubAttack " + subAttackNumber + " Status: " + currentindex + "/" + subAttack.getLastIndex());
     }
@@ -335,7 +350,8 @@ public class MasterImpl implements Master {
 
                     slRef.startSubAttack(encriptedText, knownText, initialIndex, finalIndex, subAttackID, smRef);
 
-                    System.out.println("SubAttack " + subAttackID + " created. Index range: " + initialIndex + "/" + finalIndex);
+                    System.out.println("SubAttack " + subAttackID + " created. " + 
+                                       "Index range: " + initialIndex + "/" + finalIndex);
 
                     initialIndex = finalIndex;
                     finalIndex += indexDivision;
@@ -373,17 +389,19 @@ public class MasterImpl implements Master {
                     }
                 }
                 
-                //Getting the actual working slaves
-                synchronized(slavesList){
-                    slavesWorking = new HashMap<>(slavesList);
-                }
-                
-                redistributionJobs(failedSlaves, slavesWorking, smRef);
+                redistributionJobs(failedSlaves, smRef);
             }
         }
     }
     
-    public void redistributionJobs(Map<UUID, SlaveControl> failedSlaves, Map<UUID, SlaveControl> slavesWorking, SlaveManager smRef){
+    public void redistributionJobs(Map<UUID, SlaveControl> failedSlaves, SlaveManager smRef){
+        
+        Map<UUID, SlaveControl> slavesWorking;
+        
+         //Getting the actual working slaves
+        synchronized(slavesList){
+            slavesWorking = new HashMap<>(slavesList);
+        }
         
         //Checking if there are slaves registered.
 //        while(slavesWorking.isEmpty()){
@@ -410,6 +428,7 @@ public class MasterImpl implements Master {
                 int mainAttackID;
                 AttackControl actualAttack;
                 SubAttackControl sub;
+                
                 synchronized(attackMap)
                 {
                     mainAttackID = attackMap.get(subID);
@@ -578,26 +597,42 @@ public class MasterImpl implements Master {
                 
                 for (UUID id : slavesCopy.keySet()) {
                     SlaveControl slave = slavesCopy.get(id);
+                    
                     double elapsedTime = (currentTime - slave.getTime())/1000000000;
 
+                    //Checking if slave didn't send some message within 20 seg
                     if(elapsedTime > 20.0){
-                        downSlaves.put(id, slave);
-                        try{
-                            removeSlave(id);
-                        }
-                        catch(RemoteException e){
-                            System.err.println("Monitoring error:\n" + e.getMessage());
+                        
+                        List<Integer> subAttacksNumbers = slave.getSubAttackNumbersList();
+                        
+                        //Check if slave has some attack, maybe it's a new one
+                        if(!subAttacksNumbers.isEmpty()){ 
+                            
+                            boolean finished = true;
+                            
+                            //Checking if some subAttack didn't finish, maybe it have already finished its job
+                            //So it can receive the redistribution
+                            for (Integer subAttackNumber : subAttacksNumbers) {
+                                finished &= getSubAttackControl(subAttackNumber).isDone();
+                            }
+                            
+                            if(!finished){
+                                //If some job didn't finish, so it fall
+                                downSlaves.put(id, slave);
+                            
+                                try{
+                                    removeSlave(id);
+                                }
+                                catch(RemoteException e){
+                                    System.err.println("Monitoring error:\n" + e.getMessage());
+                                }
+                            }
                         }
                     }
                 }
             
                 if(!downSlaves.isEmpty()){
-                    
-                    synchronized(slavesList){
-                        slavesCopy = new HashMap<>(slavesList);
-                    }
-
-                    redistributionJobs(downSlaves, slavesCopy, callback);
+                    redistributionJobs(downSlaves, callback);
                 }
             }
         }
