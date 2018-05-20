@@ -61,6 +61,4 @@ public class RebindService extends TimerTask {
             }
         }
     }
-    
-    
 }

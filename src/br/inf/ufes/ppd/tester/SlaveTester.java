@@ -1,9 +1,8 @@
-package br.inf.ufes.ppd.application;
+package br.inf.ufes.ppd.tester;
 
 import br.inf.ufes.ppd.Master;
 import br.inf.ufes.ppd.Slave;
 import br.inf.ufes.ppd.implementation.Configurations;
-import br.inf.ufes.ppd.implementation.SlaveImpl;
 import br.inf.ufes.ppd.services.RebindService;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
@@ -12,15 +11,15 @@ import java.rmi.server.UnicastRemoteObject;
 import java.util.Timer;
 import java.util.UUID;
 
-/** Slave Application
+/** Slave Tester to measure overhead
  *
  * @author Leonardo Santos Paulucio
  */
 
-public class SlaveServer {
+public class SlaveTester {
     
     public static void main(String[] args) {
-                    
+        
         //args[0] Dictionary file path
         //args[1] Slave name
         //args[2] Registry address
@@ -28,11 +27,9 @@ public class SlaveServer {
         String DICTIONARY_PATH = (args.length < 1) ? Configurations.DICTIONARY_PATH : args[0];
         String SLAVE_NAME = (args.length < 2) ? "SlaveLeonardo" : args[1];
         String REGISTRY_ADDRESS = (args.length < 3) ? Configurations.REGISTRY_ADDRESS : args[2];
-
-//        System.out.println(SLAVE_NAME);
-
+        
         //Creating a new Slave
-        SlaveImpl slave = new SlaveImpl();
+        SlaveImplTester slave = new SlaveImplTester();
         slave.readDictionary(DICTIONARY_PATH);
         slave.setUid(UUID.randomUUID());
  
@@ -41,6 +38,8 @@ public class SlaveServer {
             Master m = (Master) registry.lookup(Configurations.REGISTRY_MASTER_NAME);
             
             Slave slaveRef = (Slave) UnicastRemoteObject.exportObject(slave,0);
+//            m.addSlave(slaveRef, SLAVE_NAME, slave.getUid());
+//            System.out.println("Slave registered");
             
             //Creating rebind service
             Timer timer = new Timer();   
@@ -49,10 +48,10 @@ public class SlaveServer {
             
         }
         catch(RemoteException e) {
-            System.err.println("Slave exception:\n" + e.getMessage());
+            System.err.println("Slave tester remote exception:\n" + e.getMessage());
         }
         catch(Exception p){
-            System.err.println("Slave exception:\n" + p.getMessage());
+            System.err.println("Slave tester exception:\n" + p.getMessage());
         }
     }
 }

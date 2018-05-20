@@ -32,7 +32,7 @@ public class Encrypt {
             }catch (NoSuchAlgorithmException | NoSuchPaddingException | 
                     IllegalBlockSizeException | InvalidKeyException e) {
                 
-                System.err.println("Decrypter error: \n " + e.getMessage());                
+                System.err.println("Encrypter error: \n " + e.getMessage());                
             }
         
         return encrypted;

@@ -1,4 +1,4 @@
-package br.inf.ufes.ppd.implementation;
+package br.inf.ufes.ppd.tester;
 
 import br.inf.ufes.ppd.Slave;
 import br.inf.ufes.ppd.SlaveManager;
@@ -13,7 +13,7 @@ import java.util.*;
  * @author Leonardo Santos Paulucio
  */
 
-public class SlaveImpl implements Slave {
+public class SlaveImplTester implements Slave {
 
     private static List<String> keys = new ArrayList<String>();
     private UUID uid;
@@ -44,12 +44,6 @@ public class SlaveImpl implements Slave {
         } catch (IOException e) {
             System.err.println("ReadDictionary error: \n" + e.getMessage());
         }
-
-//       for (String s : keys) {
-//           System.out.println(s);
-//       }
-//
-//       System.out.println("Tamanho: " + keys.size());
     }
 
     /**
@@ -72,9 +66,6 @@ public class SlaveImpl implements Slave {
                                SlaveManager callbackinterface) 
         throws RemoteException {
 
-        Thread subAttack = new SubAttackService(getUid(), ciphertext, knowntext, initialwordindex, 
-                                                finalwordindex, attackNumber, callbackinterface, keys);
-        
-        subAttack.start();
+        callbackinterface.checkpoint(getUid(), attackNumber, finalwordindex);
     }         
 }

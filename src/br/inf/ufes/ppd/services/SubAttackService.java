@@ -17,13 +17,13 @@ import java.util.UUID;
 
 public class SubAttackService extends Thread {
     
-    UUID uid;
-    byte[] encryptedText;
-    byte[] knownText;
-    long currentIndex;
-    long finalIndex;
-    int attackID;
-    SlaveManager smRef;
+    private UUID uid;
+    private byte[] encryptedText;
+    private byte[] knownText;
+    private long currentIndex;
+    private long finalIndex;
+    private int subAttackID;
+    private SlaveManager smRef;
     private List<String> keys;
         
     /**
@@ -54,7 +54,7 @@ public class SubAttackService extends Thread {
         this.knownText = knowntext;
         this.currentIndex = initialwordindex;
         this.finalIndex = finalwordindex;
-        this.attackID = attackNumber;
+        this.subAttackID = attackNumber;
         this.smRef = callbackinterface;
         this.keys = keysList;
     }
@@ -69,7 +69,7 @@ public class SubAttackService extends Thread {
         public void run() {
             try{
                 //Notify master about current index
-                smRef.checkpoint(uid, attackID, currentIndex);
+                smRef.checkpoint(uid, subAttackID, currentIndex);
                 System.out.println("Checkpoint " + currentIndex);
             }
             catch (RemoteException e){
@@ -82,8 +82,7 @@ public class SubAttackService extends Thread {
     {
         String KNOWN_TEXT = new String(knownText);
 
-        System.out.println("New Attack: " + attackID);
-
+        System.out.println("New SubAttack: " + subAttackID);
         //Making a timer to notify master about currentIndex
         Timer timer = new Timer();
 
@@ -107,7 +106,7 @@ public class SubAttackService extends Thread {
                     currentGuess.setKey(actualKey);
                     currentGuess.setMessage(decrypted);
 
-                    smRef.foundGuess(uid, attackID, currentIndex, currentGuess);
+                    smRef.foundGuess(uid, subAttackID, currentIndex, currentGuess);
 
 //                    System.out.println("Key found: " + actualKey);
                 }
@@ -124,13 +123,13 @@ public class SubAttackService extends Thread {
         timer.cancel(); //Closing task checkpoint
 
         try {
-            smRef.checkpoint(uid, attackID, currentIndex); //End job sending last checkpoint            
-            System.out.println("Checkpoint " + currentIndex);
+            smRef.checkpoint(uid, subAttackID, currentIndex); //End job sending last checkpoint            
+            System.out.println("Final checkpoint " + currentIndex);
         }
         catch (RemoteException e){
             System.err.println("Subattack callback fail:\n" + e.getMessage());                
         }
-        System.out.println("End subattack: " + attackID);
+        System.out.println("End subattack: " + subAttackID);
     }
     
 }

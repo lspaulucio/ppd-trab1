@@ -16,11 +16,17 @@ import java.rmi.server.UnicastRemoteObject;
 public class MasterServer {
     
     public static void main(String[] args) {
+        
+        //args[0] Registry address
+        
+        String REGISTRY_ADDRESS = (args.length < 1) ? Configurations.REGISTRY_ADDRESS : args[2]; 
+        
         try {
+        
             MasterImpl masterObj = new MasterImpl();
             Master masterRef = (Master) UnicastRemoteObject.exportObject(masterObj, 0);
             // Bind the remote object in the registry
-            Registry registry = LocateRegistry.getRegistry(Configurations.REGISTRY_ADDRESS); // opcional: host
+            Registry registry = LocateRegistry.getRegistry(REGISTRY_ADDRESS);
             registry.rebind(Configurations.REGISTRY_MASTER_NAME, masterRef);
 
             System.out.println("Master ready!");

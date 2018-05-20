@@ -13,7 +13,7 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.util.UUID;
 
-/**
+/** Master Implementation.
  *
  * @author Leonardo Santos Paulucio
  */
@@ -77,7 +77,7 @@ class AttackControl {
         this.knownText = knownText;
     }
     private boolean done;
-    private long startTime;
+    private double startTime;
     
     public Map<Integer, SubAttackControl> getSubAttacksMap() {
         return subAttacksMap;
@@ -87,11 +87,11 @@ class AttackControl {
         this.subAttacksMap = subAttacksMap;
     }
     
-    public long getStartTime() {
+    public double getStartTime() {
         return startTime;
     }
 
-    public void setStartTime(long startTime) {
+    public void setStartTime(double startTime) {
         this.startTime = startTime;
     }
     
@@ -126,7 +126,7 @@ class SlaveControl {
 
     private Slave slaveRef;
     private String name;
-    private long time;
+    private double time;
     private List<Integer> subAttackNumbersList;
 
     public Slave getSlaveRef() {
@@ -145,11 +145,11 @@ class SlaveControl {
         this.name = name;
     }
 
-    public long getTime() {
+    public double getTime() {
         return time;
     }
 
-    public void setTime(long time) {
+    public void setTime(double time) {
         this.time = time;
     }
 
@@ -545,7 +545,7 @@ public class MasterImpl implements Master {
             }
             
             try{
-                Thread.sleep(5000);
+                Thread.sleep(1000);
             }
             catch(InterruptedException e){
                 System.err.println("Sleep done job error:\n" + e.getMessage());
@@ -602,9 +602,9 @@ public class MasterImpl implements Master {
                 
                 for (UUID id : slavesCopy.keySet()) {
                     SlaveControl slave = slavesCopy.get(id);
-                    long elapsedTime = (currentTime - slave.getTime())/1000000000;
+                    double elapsedTime = (currentTime - slave.getTime())/1000000000;
 
-                    if(elapsedTime > 20){
+                    if(elapsedTime > 20.0){
                         downSlaves.put(id, slave);
                         try{
                             removeSlave(id);
