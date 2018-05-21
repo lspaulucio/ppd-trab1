@@ -2,7 +2,7 @@ package br.inf.ufes.ppd.implementation;
 
 import br.inf.ufes.ppd.Guess;
 import br.inf.ufes.ppd.SlaveManager;
-import br.inf.ufes.ppd.cripto.Decrypt;
+import br.inf.ufes.ppd.utils.Decrypt;
 import java.rmi.RemoteException;
 import java.util.List;
 import java.util.Timer;
@@ -122,7 +122,7 @@ public class SubAttackService extends Thread {
         timer.cancel(); //Closing task checkpoint
 
         try {
-            smRef.checkpoint(uid, subAttackID, currentIndex); //End job sending last checkpoint            
+            smRef.checkpoint(uid, subAttackID, currentIndex); //End job. Sending last checkpoint            
             System.out.println("Final checkpoint " + currentIndex);
         }
         catch (RemoteException e){

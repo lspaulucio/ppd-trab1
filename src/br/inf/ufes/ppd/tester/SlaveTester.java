@@ -20,26 +20,22 @@ public class SlaveTester {
     
     public static void main(String[] args) {
         
-        //args[0] Dictionary file path
-        //args[1] Slave name
-        //args[2] Registry address
+        //args[0] Slave name
+        //args[1] Registry address
         
-        String DICTIONARY_PATH = (args.length < 1) ? Configurations.DICTIONARY_PATH : args[0];
-        String SLAVE_NAME = (args.length < 2) ? "SlaveLeonardo" : args[1];
-        String REGISTRY_ADDRESS = (args.length < 3) ? Configurations.REGISTRY_ADDRESS : args[2];
+        String SLAVE_NAME = (args.length < 1) ? "SlaveLeonardo" : args[0];
+        String REGISTRY_ADDRESS = (args.length < 2) ? Configurations.REGISTRY_ADDRESS : args[1];
         
         //Creating a new Slave
         SlaveImplTester slave = new SlaveImplTester();
-        slave.readDictionary(DICTIONARY_PATH);
         slave.setUid(UUID.randomUUID());
- 
+        
         try {
             Registry registry = LocateRegistry.getRegistry(REGISTRY_ADDRESS);
             Master m = (Master) registry.lookup(Configurations.REGISTRY_MASTER_NAME);
             
             Slave slaveRef = (Slave) UnicastRemoteObject.exportObject(slave,0);
-//            m.addSlave(slaveRef, SLAVE_NAME, slave.getUid());
-//            System.out.println("Slave registered");
+            m.addSlave(slaveRef, SLAVE_NAME, slave.getUid());
             
             //Creating rebind service
             Timer timer = new Timer();   

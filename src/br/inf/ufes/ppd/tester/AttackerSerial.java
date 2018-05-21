@@ -1,6 +1,6 @@
 package br.inf.ufes.ppd.tester;
 
-import br.inf.ufes.ppd.cripto.Decrypt;
+import br.inf.ufes.ppd.utils.Decrypt;
 import java.io.*;
 import java.util.*;
 

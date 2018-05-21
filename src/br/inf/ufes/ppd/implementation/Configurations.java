@@ -11,6 +11,10 @@ public class Configurations {
     public static final String REGISTRY_MASTER_NAME = "mestre";
     
     public static final String DICTIONARY_PATH = "dictionary.txt";
+    public static final String RESULTS_PATH = "Results/";
+    
+    public static final int NUMBER_SAMPLES = 5;
+    public static final int KNOWN_TEXT_SIZE = 10;
     
     public static final int DICTIONARY_SIZE = 80368;
     

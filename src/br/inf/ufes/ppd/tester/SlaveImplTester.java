@@ -2,9 +2,7 @@ package br.inf.ufes.ppd.tester;
 
 import br.inf.ufes.ppd.Slave;
 import br.inf.ufes.ppd.SlaveManager;
-import br.inf.ufes.ppd.implementation.SubAttackService;
-import java.io.File;
-import java.io.IOException;
+import br.inf.ufes.ppd.utils.FileTools;
 import java.rmi.RemoteException;
 import java.util.*;
 
@@ -15,7 +13,6 @@ import java.util.*;
 
 public class SlaveImplTester implements Slave {
 
-    private static List<String> keys = new ArrayList<String>();
     private UUID uid;
 
     public UUID getUid() {
@@ -27,27 +24,8 @@ public class SlaveImplTester implements Slave {
     }
     
     /**
-     * Realiza a leitura do dicionario.
-     * @param filename Nome do arquivo de dicionario.
-     */ 
-    public void readDictionary(String filename) {
-
-        try {
-            Scanner dic = new Scanner(new File(filename));
-
-            while (dic.hasNext()) {
-                keys.add(dic.next());
-            }
-
-            dic.close();
-
-        } catch (IOException e) {
-            System.err.println("ReadDictionary error: \n" + e.getMessage());
-        }
-    }
-
-    /**
-     * Implementação do startSubAttack
+     * Implementação do startSubAttack para medir overhead.
+     * O escravo irá retornar imediatamente o último indice
      * @param ciphertext Arquivo criptografado.
      * @param knowntext Trecho conhecido do arquivo criptografado.
      * @param initialwordindex Índice inicial do sub ataque.

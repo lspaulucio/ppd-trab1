@@ -2,8 +2,7 @@ package br.inf.ufes.ppd.implementation;
 
 import br.inf.ufes.ppd.Slave;
 import br.inf.ufes.ppd.SlaveManager;
-import java.io.File;
-import java.io.IOException;
+import br.inf.ufes.ppd.utils.FileTools;
 import java.rmi.RemoteException;
 import java.util.*;
 
@@ -31,24 +30,7 @@ public class SlaveImpl implements Slave {
      */ 
     public void readDictionary(String filename) {
 
-        try {
-            Scanner dic = new Scanner(new File(filename));
-
-            while (dic.hasNext()) {
-                keys.add(dic.next());
-            }
-
-            dic.close();
-
-        } catch (IOException e) {
-            System.err.println("ReadDictionary error: \n" + e.getMessage());
-        }
-
-//       for (String s : keys) {
-//           System.out.println(s);
-//       }
-//
-//       System.out.println("Tamanho: " + keys.size());
+        keys = FileTools.readDictionary(filename);
     }
 
     /**

@@ -2,11 +2,11 @@ package br.inf.ufes.ppd.tester;
 
 import br.inf.ufes.ppd.Guess;
 import br.inf.ufes.ppd.Master;
-import br.inf.ufes.ppd.cripto.Encrypt;
 import br.inf.ufes.ppd.implementation.Configurations;
+import br.inf.ufes.ppd.utils.Encrypt;
+import br.inf.ufes.ppd.utils.FileTools;
 import br.inf.ufes.ppd.utils.Tupla;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
@@ -23,18 +23,6 @@ import java.util.Scanner;
  */
 
 public class ClientTester {
-    
-    /**
-     * Salva um vetor de bytes em um arquivo.
-     * @param filename Nome do arquivo que será gerado.
-     * @param data Vetor de bytes a ser gravado.
-    */
-    private static void saveFile(String filename, byte[] data) throws IOException
-    {
-        FileOutputStream out = new FileOutputStream(filename);
-        out.write(data);
-        out.close();
-    }
     
     /**
      * Realiza a leitura do dicionario.
@@ -66,47 +54,68 @@ public class ClientTester {
         
         try {
             
-            if(args.length < 3){
+            if(args.length < 4){
                 System.err.println("Missing parameters");
-                throw new Exception("Usage: Client Tester <NumberAttacks> <InitialRange> <FinalRange>");
+                throw new Exception("Usage: Client Tester <s|r> <NumberAttacks> <InitialRange> <FinalRange> [<NumberOfSamples>]");
             }
             
             readDictionary(Configurations.DICTIONARY_PATH);
-            
+
             System.out.println("Client start");
             Registry registry = LocateRegistry.getRegistry(Configurations.REGISTRY_ADDRESS);
             Master m = (Master) registry.lookup(Configurations.REGISTRY_MASTER_NAME); 
             
             Random rand = new Random();
             
-            int numberAttacks = new Integer(args[0]);
-            int initialRange = new Integer(args[1]);
-            int finalRange = new Integer(args[2]);
+            String type = args[0];
+            
+            int numberAttacks = new Integer(args[1]);
+            int initialRange = new Integer(args[2]);
+            int finalRange = new Integer(args[3]);
+            int samples = (args.length < 5) ? Configurations.NUMBER_SAMPLES : new Integer(args[4]);
+            
+            int division = (finalRange - initialRange)/numberAttacks;
+            
             byte[] knownText;
             byte[] encryptedText;
             double startTime, endTime;
+            
             List<Tupla> dados = new ArrayList<>();
             
-            for(int i = 0; i < numberAttacks; i++){
+            for(int i = 0; i <= numberAttacks; i++){
+                
+                Guess[] guessVector = null;
                 
                 int key = rand.nextInt(Configurations.DICTIONARY_SIZE);
-                int length = rand.nextInt(finalRange - initialRange + 1) + initialRange;
+                int length;
+                
+                if(type.equals("r")){
+                    length = rand.nextInt(finalRange - initialRange + 1) + initialRange;
+                }
+                else{
+                    length = initialRange;
+                    initialRange += division;
+                }
+
+                System.out.println("Size: " + length);
+                
                 encryptedText = new byte[length];
                 rand.nextBytes(encryptedText);
-                knownText = Arrays.copyOf(encryptedText, 20);
+                knownText = Arrays.copyOf(encryptedText, Configurations.KNOWN_TEXT_SIZE);
                 encryptedText = Encrypt.encrypter(keys.get(key).getBytes(), encryptedText);
-                
                 
                 System.out.println("Key " + i + ": " + keys.get(key));
 //                System.out.println(knownText);            
 //                System.out.println(encryptedText);
+                
                 startTime = System.nanoTime();
                 
-                Guess[] guessVector = m.attack(encryptedText, knownText);
+                for(int s = 0; s < samples; s++)
+                    guessVector = m.attack(encryptedText, knownText);
                 
                 endTime = System.nanoTime() - startTime;
                 
-                endTime /= 1000000000;
+                endTime /= samples*1000000000;
                 
                 dados.add(new Tupla(endTime, length));
                 
@@ -114,7 +123,7 @@ public class ClientTester {
 
                     for(int j = 0; j < guessVector.length; j++){
                         String file = "Results/" + guessVector[j].getKey() + ".msg";
-                        //saveFile(file, guessVector[j].getMessage());
+//                        FileTools.saveResults(file, guessVector[j].getMessage());
                         System.out.println("Key found: " + guessVector[j].getKey());
                     }
                 }
