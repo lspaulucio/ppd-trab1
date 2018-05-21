@@ -77,7 +77,7 @@ public class FileTools {
      * @param filename Nome do arquivo que será gerado.
      * @param data Vetor de bytes a ser gravado.
     */
-    public static void saveResults(String file, byte[] data) throws IOException
+    public static void saveResult(String file, byte[] data) throws IOException
     {
         String filename = Configurations.RESULTS_PATH + file;
         FileOutputStream out = new FileOutputStream(filename);

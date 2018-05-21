@@ -17,7 +17,7 @@ import java.util.*;
 
 public class Client {
     
-    static List<String> keys;
+    private static List<String> keys;
     
     public static void main(String[] args)
     {              
@@ -67,7 +67,7 @@ public class Client {
 
                 for(int i = 0; i < guessVector.length; i++){
                     String file = guessVector[i].getKey() + ".msg";
-                    FileTools.saveResults(file, guessVector[i].getMessage());
+                    FileTools.saveResult(file, guessVector[i].getMessage());
                     System.out.println("Key found: " + guessVector[i].getKey());
                 }
             }
