@@ -1,9 +1,8 @@
-package br.inf.ufes.ppd.services;
+package br.inf.ufes.ppd.implementation;
 
 import br.inf.ufes.ppd.Guess;
 import br.inf.ufes.ppd.SlaveManager;
 import br.inf.ufes.ppd.cripto.Decrypt;
-import br.inf.ufes.ppd.implementation.Configurations;
 import java.rmi.RemoteException;
 import java.util.List;
 import java.util.Timer;
@@ -38,7 +37,7 @@ public class SubAttackService extends Thread {
      * checkpoint e foundGuess.
      * @param keysList Lista com chaves do dicionário.
      * @see CheckPointTask
-     * @see br.inf.ufes.ppd.services.RebindService
+     * @see br.inf.ufes.ppd.implementation.RebindService
      */
     
     public SubAttackService(UUID id, 

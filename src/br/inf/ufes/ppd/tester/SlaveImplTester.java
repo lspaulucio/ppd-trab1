@@ -2,7 +2,7 @@ package br.inf.ufes.ppd.tester;
 
 import br.inf.ufes.ppd.Slave;
 import br.inf.ufes.ppd.SlaveManager;
-import br.inf.ufes.ppd.services.SubAttackService;
+import br.inf.ufes.ppd.implementation.SubAttackService;
 import java.io.File;
 import java.io.IOException;
 import java.rmi.RemoteException;
@@ -55,7 +55,7 @@ public class SlaveImplTester implements Slave {
      * @param attackNumber Número do sub ataque
      * @param callbackinterface  Interface do mestre para chamada de
      * checkpoint e foundGuess.
-     * @see br.inf.ufes.ppd.services.SubAttackService
+     * @see br.inf.ufes.ppd.implementation.SubAttackService
      */
     @Override
     public void startSubAttack(byte[] ciphertext, 

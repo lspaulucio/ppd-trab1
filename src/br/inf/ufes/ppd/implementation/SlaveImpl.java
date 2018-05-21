@@ -2,7 +2,6 @@ package br.inf.ufes.ppd.implementation;
 
 import br.inf.ufes.ppd.Slave;
 import br.inf.ufes.ppd.SlaveManager;
-import br.inf.ufes.ppd.services.SubAttackService;
 import java.io.File;
 import java.io.IOException;
 import java.rmi.RemoteException;

@@ -4,7 +4,7 @@ import br.inf.ufes.ppd.Master;
 import br.inf.ufes.ppd.Slave;
 import br.inf.ufes.ppd.implementation.Configurations;
 import br.inf.ufes.ppd.implementation.SlaveImpl;
-import br.inf.ufes.ppd.services.RebindService;
+import br.inf.ufes.ppd.implementation.RebindService;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;

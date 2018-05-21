@@ -1,8 +1,7 @@
-package br.inf.ufes.ppd.services;
+package br.inf.ufes.ppd.implementation;
 
 import br.inf.ufes.ppd.Master;
 import br.inf.ufes.ppd.Slave;
-import br.inf.ufes.ppd.implementation.Configurations;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;

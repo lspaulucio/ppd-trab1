@@ -1,4 +1,4 @@
-package br.inf.ufes.ppds;
+package br.inf.ufes.ppd.tester;
 
 import br.inf.ufes.ppd.cripto.Decrypt;
 import java.io.*;

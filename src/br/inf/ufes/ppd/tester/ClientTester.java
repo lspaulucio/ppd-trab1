@@ -4,10 +4,9 @@ import br.inf.ufes.ppd.Guess;
 import br.inf.ufes.ppd.Master;
 import br.inf.ufes.ppd.cripto.Encrypt;
 import br.inf.ufes.ppd.implementation.Configurations;
-import java.io.BufferedWriter;
+import br.inf.ufes.ppd.utils.Tupla;
 import java.io.File;
 import java.io.FileOutputStream;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
@@ -59,16 +58,6 @@ public class ClientTester {
         }
     }
 
-    public static class Tupla{
-        long length;
-        double time;
-        
-        public Tupla(double t, long l){
-            this.time = t;
-            this.length = l;
-        }
-    }
-    
     public static void main(String[] args)
     {              
         //args[0] number of attacks
@@ -134,7 +123,7 @@ public class ClientTester {
                 }
             }
             
-            generateCSV(dados);
+            Tupla.generateCSV(dados);
             
         }
         catch(RemoteException e)
@@ -146,25 +135,5 @@ public class ClientTester {
             p.printStackTrace();
         }
     }  
-    
-    public static void generateCSV(List<Tupla> t){
-        
-        String filename = "Results/dados.csv";
-        
-        try {
-            BufferedWriter out = new BufferedWriter(new FileWriter(new File(filename)));
-            out.write("Tamanho da Mensagem;Tempo de Resposta\n");
-            
-            for (Tupla tupla : t) {
-                out.write(Long.toString(tupla.length) + ";" + Double.toString(tupla.time).replace(".", ",") + "\n");                
-            }
-            out.close();
-        } catch (IOException ex) {
-            ex.printStackTrace();
-        }
-        
-    }
-    
-    
 }
 

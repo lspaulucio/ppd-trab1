@@ -1,4 +1,4 @@
-package br.inf.ufes.ppd.cripto;
+package br.inf.ufes.ppd.utils;
 
 import javax.crypto.*;
 import javax.crypto.spec.*;
