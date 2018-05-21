@@ -44,8 +44,8 @@ dist/
 *.fot
 *.cb
 *.cb2
-.*.lb
-
+*.lb
+*.gz
 ## Intermediate documents:
 *.dvi
 *.xdv
