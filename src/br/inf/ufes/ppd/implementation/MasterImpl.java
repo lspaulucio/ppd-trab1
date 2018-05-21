@@ -274,19 +274,19 @@ public class MasterImpl implements Master {
     @Override
     public void checkpoint(UUID slaveKey, int subAttackNumber, long currentindex) throws RemoteException {
         
-        int attackNumber = attackMap.get(subAttackNumber);
+        int attackID = attackMap.get(subAttackNumber);
         
         SlaveControl s = slavesList.get(slaveKey);
         s.setTime(System.nanoTime()); //Registering current time of checkpoint of slave
         
-        AttackControl attack = attacksList.get(attackNumber);
+        AttackControl attack = attacksList.get(attackID);
                 
         SubAttackControl subAttack = attack.getSubAttacksMap().get(subAttackNumber);
         subAttack.setCurrentIndex(currentindex);   //Updating currentIndex
         
         double elapsedTime = (System.nanoTime() - attack.getStartTime())/1000000000;
         
-        System.out.println("Attack Number: "+ attackNumber + " Elapsed Time: " + elapsedTime + "s");
+        System.out.println("Attack Number: "+ attackID + " Elapsed Time: " + elapsedTime + "s");
         System.out.println("Slave: " + s.getName() + " checkpoint.");
         System.out.println("SubAttack " + subAttackNumber + " Status: " + currentindex + "/" + subAttack.getLastIndex());
     }
