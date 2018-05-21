@@ -42,7 +42,7 @@ public class Tupla {
     
     public static void generateCSV(List<Tupla> t){
         
-        String filename = "Results/dados.csv";
+        String filename = "Medicoes/dados.csv";
         
         try {
             BufferedWriter out = new BufferedWriter(new FileWriter(new File(filename)));
