@@ -51,6 +51,7 @@ public class RebindService extends TimerTask {
                 Master m = (Master) registry.lookup(Configurations.REGISTRY_MASTER_NAME);
                 
                 m.addSlave(slaveRef, slaveName, slaveUID);
+                System.out.println("Slave registered");
                 masterRef = m; //Save new master reference
             }
             catch (RemoteException p){
