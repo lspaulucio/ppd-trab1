@@ -47,6 +47,8 @@ public class SlaveServer {
             RebindService rs = new RebindService(m, slaveRef, SLAVE_NAME, slave.getUid());            
             timer.scheduleAtFixedRate(rs, 0, Configurations.REBIND_TIME);  // 0 = delay, REBIND_TIME = frequence
             
+            System.out.println("Slave: " + SLAVE_NAME + " ready");
+            
         }
         catch(RemoteException e) {
             System.err.println("Slave exception:\n" + e.getMessage());

@@ -55,11 +55,11 @@ public class Client {
                 System.out.println("Key: " + keys.get(key));
             }
             
-            System.out.println("Client start");
-            
 //            System.out.println(encryptedText);
             Registry registry = LocateRegistry.getRegistry(Configurations.REGISTRY_ADDRESS);
             Master m = (Master) registry.lookup(Configurations.REGISTRY_MASTER_NAME); 
+            
+            System.out.println("Client started. Sending attack request");
             
             Guess[] guessVector = m.attack(encryptedText, knownText.getBytes());
             

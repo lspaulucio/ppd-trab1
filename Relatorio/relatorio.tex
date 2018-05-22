@@ -258,10 +258,6 @@ Esse trabalho tem por objetivo praticar programação paralela usando o \textit{
 
 \chapter{Implementação} 
 
-
-
-
-
 \section{Estrutura de Dados}
 
 
@@ -269,6 +265,20 @@ Esse trabalho tem por objetivo praticar programação paralela usando o \textit{
 Durante o desenvolvimento do trabalho alguns problemas surgiram fazendo com que fosse necessário realizar algumas mudanças
 na estrutura de dados e na lógica de programação. 
 
+
+\subsection{Cliente e Escravo}
+O cliente foi o primeiro a ser implementado. Devido a sua simplicidade não foram encontrados problemas durante sua implementação.
+
+%O programa cliente recebe como argumentos: o nome do arquivo criptografado, o trecho conhecido do texto original e opcionalmente um terceiro parâmetro que indica o tamanho do vetor de \textit{bytes} em caso de o arquivo criptografado não existir.
+%
+%Assim, o cliente é responsável por localizar o mestre utilizando o \textit{Registry} e solicitar o serviço de ataque através do método \textit{attack}. Ao solicitar o serviço o cliente passa o arquivo criptografado e o trecho conhecido. Caso o nome do arquivo fornecido como argumento para o programa cliente seja inválido o programa cliente é responsável por gerar um vetor aleatório de bytes, cujo tamanho será igual ao 3º parâmetro fornecido ou, caso esse não exista, um tamanho aleatório na faixa de 1Kb a 100Kb.
+
+Já na implementação do escravo, que também não era muito complicada, um problema ocorreu, apesar de 
+ter sido de fácil solução.
+
+O problema que surgiu foi durante a implementação do método \textit{startSubAttack}. Nos primeiros testes notou-se que os escravos não realizavam outros sub-ataques em paralelo, assim, ao analisar o código percebeu-se que não estavam sendo criadas \textit{threads} no método para realizar o ataque, dessa forma o escravo ficava bloqueado durante a execução de um ataque não atendendo outras requisições que chegavam. Ao se criar \textit{threads} esse problema foi solucionado.
+
+\subsection{Mestre}
 Os principais problemas que surgiram ocorreram durante a implementação do mestre, que é o responsável por gerenciar
 todos os escravos e todos os ataques que estão ocorrendo no momento.
 
@@ -282,11 +292,20 @@ A interoperabilidade do trabalho foi testada com os seguintes grupos:
 \end{itemize}
 
 \section{Problemas Encontrados}
+falar da WIFI
 
 
 
 
 \chapter{Análise de Desempenho} 
+\section{Máquinas e Equipamentos Utilizados}
+Nesse trabalho foi utilizado um computador com processador \textit{Intel Core i5-2410M CPU 2.30GHz x 4} com 6GB de 
+memória RAM e o Sistema Operacional utilizado foi o \textit{Linux Mint KDE 64-bit}.
+
+
+Pegar informações dos PCs do LabGrad.
+
+
 
 \section{Uma Única Máquina}
 
@@ -303,10 +322,17 @@ A interoperabilidade do trabalho foi testada com os seguintes grupos:
 Ao final desse trabalho é possível notar que um sistema distribuído é uma ferramenta muito poderosa pois permite aproveitar recursos de diferentes equipamentos para executar uma tarefa em comum.
 
 Com a distribuição do serviço entre as máquinas é possível obter uma melhora significativa no tempo de resposta speedup. 
-
 Observa-se ainda que não é possível atingir o speed up ideal segundo aLei de Amihdal devido ao overhead existente na rede, processamento, etc.
 
-Colocar no ClientTester numero de samples inicio fim numero de ataques default 10
+
+
+Outro ponto que é importante e que foi possível notar durante a implementação desse trabalho é a complexidade de funcionamento que existe na máquina responsável por realizar todo o gerenciamento, nesse caso representada pelo mestre. Ele tem que lidar: com o controle de máquinas ativas, com a distribuição das tarefas, com o controle do status das tarefas, com o controle de concorrência, redistribuição de tarefas, entre outros. Além de todas essas tarefas ele ainda tem que cuidar do acesso
+concorrente à variáveis de controle, que é um grande problema ao se trabalhar com muitas \textit{threads}, assim, percebe-se a necessidade que sempre vai existir para que algum pedaço do programa não seja paralelizável.
+
+
+ 
+
+falar das analises
 
 
 
