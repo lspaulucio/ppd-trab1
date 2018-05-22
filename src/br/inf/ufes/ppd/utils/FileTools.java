@@ -80,7 +80,14 @@ public class FileTools {
     */
     public static void saveResult(String file, byte[] data) throws IOException
     {
-        String filename = Configurations.RESULTS_PATH + file;
+        File dir = new File(Configurations.RESULTS_FOLDER);
+        
+        //Checking if directory exists
+        if(!dir.exists()){
+            dir.mkdir();
+        }
+        
+        String filename = Configurations.RESULTS_FOLDER + file;
         FileOutputStream out = new FileOutputStream(filename);
         out.write(data);
         out.close();

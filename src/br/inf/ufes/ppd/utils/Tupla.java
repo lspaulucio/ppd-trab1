@@ -5,6 +5,7 @@
  */
 package br.inf.ufes.ppd.utils;
 
+import br.inf.ufes.ppd.implementation.Configurations;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
@@ -42,7 +43,14 @@ public class Tupla {
     
     public static void generateCSV(List<Tupla> t){
         
-        String filename = "Medicoes/dados.csv";
+        File dir = new File(Configurations.MEASURE_FOLDER);
+        
+        //Checking if directory exists
+        if(!dir.exists()){
+            dir.mkdir();
+        }
+        
+        String filename = Configurations.MEASURE_FOLDER + "dados.csv";
         
         try {
             BufferedWriter out = new BufferedWriter(new FileWriter(new File(filename)));
