@@ -2,7 +2,6 @@ package br.inf.ufes.ppd.tester;
 
 import br.inf.ufes.ppd.Slave;
 import br.inf.ufes.ppd.SlaveManager;
-import br.inf.ufes.ppd.utils.FileTools;
 import java.rmi.RemoteException;
 import java.util.*;
 

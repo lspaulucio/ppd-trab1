@@ -227,7 +227,7 @@ public class MasterImpl implements Master {
 
     /**
      * Remove um escravo da lista.
-     * @param slavekey  Identificador único do escravo que sera removido.
+     * @param slaveKey  Identificador único do escravo que sera removido.
      */
     @Override
     public void removeSlave(UUID slaveKey) throws RemoteException {
@@ -503,6 +503,7 @@ public class MasterImpl implements Master {
      * @param ciphertext Mensagem criptografada.
      * @param knowntext  Trecho conhecido da mensagem.
      * @return Vetor de guess encontrados
+     * @throws java.rmi.RemoteException
      */ 
     @Override
     public Guess[] attack(byte[] ciphertext, byte[] knowntext) throws RemoteException {

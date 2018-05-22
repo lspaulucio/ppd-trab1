@@ -22,13 +22,11 @@ public class AttackerCentralized {
             
             String KNOWN_TEXT = args[1];//"JFIF";
             byte[] message = FileTools.readFile(args[0]);//"TestFiles/desafio.cipher"
-            byte[] key = null;
             
             while(file.hasNext())
             {
                 try{
-                    key = file.next().getBytes();
-                    
+                    byte[] key = file.next().getBytes();
                     byte[] decrypted = Decrypt.decrypter(key, message);
 
                     String text = new String(decrypted);

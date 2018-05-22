@@ -20,6 +20,7 @@ public class Decrypt {
      * @param key Chave que será utilizada para descriptografar.
      * @param message Mensagem que será descriptografada.
      * @return Mensagem descriptografada.
+     * @throws javax.crypto.BadPaddingException
     */
     public static byte[] decrypter(byte[] key, byte[] message) throws BadPaddingException{
         

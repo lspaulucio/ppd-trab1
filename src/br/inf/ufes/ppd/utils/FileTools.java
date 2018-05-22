@@ -74,8 +74,9 @@ public class FileTools {
     
     /**
      * Salva um vetor de bytes em um arquivo.
-     * @param filename Nome do arquivo que será gerado.
+     * @param file Nome do arquivo que será gerado.
      * @param data Vetor de bytes a ser gravado.
+     * @throws java.io.IOException
     */
     public static void saveResult(String file, byte[] data) throws IOException
     {

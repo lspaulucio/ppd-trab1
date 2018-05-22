@@ -16,9 +16,9 @@ import java.util.UUID;
 public class RebindService extends TimerTask {
     
     private Master masterRef;
-    private Slave slaveRef;
-    private String slaveName;
-    private UUID slaveUID;
+    private final Slave slaveRef;
+    private final String slaveName;
+    private final UUID slaveUID;
     
     /**
      * Construtor do serviço de rebind.
@@ -34,6 +34,7 @@ public class RebindService extends TimerTask {
         this.slaveUID = uid;
     }
     
+    @Override
     public void run(){
                 
         try{

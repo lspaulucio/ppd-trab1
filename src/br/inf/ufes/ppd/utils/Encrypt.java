@@ -17,6 +17,7 @@ public class Encrypt {
      * @param key Chave que será utilizada para criptografar.
      * @param message Mensagem que se deseja criptografar.   
      * @return Mensagem criptografado.
+     * @throws javax.crypto.BadPaddingException
     */
     public static byte[] encrypter(byte[] key, byte[] message) throws BadPaddingException{    
         

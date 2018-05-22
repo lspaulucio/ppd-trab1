@@ -99,11 +99,10 @@ public class ClientTester {
                 
                 dados.add(new Tupla(endTime, length));
                 
-                if(guessVector.length != 0){
+                if(guessVector != null){
 
-                    for(int j = 0; j < guessVector.length; j++){
-                        String file = "Results/" + guessVector[j].getKey() + ".msg";
-                        System.out.println("Key found: " + guessVector[j].getKey());
+                    for (Guess guess : guessVector) {
+                        System.out.println("Key found: " + guess.getKey());
                     }
                 }
                 else{

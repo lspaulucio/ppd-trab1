@@ -5,7 +5,6 @@ import br.inf.ufes.ppd.utils.Decrypt;
 import br.inf.ufes.ppd.utils.Encrypt;
 import br.inf.ufes.ppd.utils.FileTools;
 import br.inf.ufes.ppd.utils.Tupla;
-import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;

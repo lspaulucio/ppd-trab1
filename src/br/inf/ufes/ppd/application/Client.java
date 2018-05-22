@@ -65,10 +65,10 @@ public class Client {
             
             if(guessVector.length != 0){
 
-                for(int i = 0; i < guessVector.length; i++){
-                    String file = guessVector[i].getKey() + ".msg";
-                    FileTools.saveResult(file, guessVector[i].getMessage());
-                    System.out.println("Key found: " + guessVector[i].getKey());
+                for (Guess guess : guessVector) {
+                    String file = guess.getKey() + ".msg";
+                    FileTools.saveResult(file, guess.getMessage());
+                    System.out.println("Key found: " + guess.getKey());
                 }
             }
             else{
