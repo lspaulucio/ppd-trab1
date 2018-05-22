@@ -1,8 +1,7 @@
 package br.inf.ufes.ppd.tester;
 
 import br.inf.ufes.ppd.implementation.Configurations;
-import br.inf.ufes.ppd.utils.Decrypt;
-import br.inf.ufes.ppd.utils.Encrypt;
+import br.inf.ufes.ppd.utils.Crypto;
 import br.inf.ufes.ppd.utils.FileTools;
 import br.inf.ufes.ppd.utils.Tupla;
 import java.util.ArrayList;
@@ -69,7 +68,7 @@ public class AttackerCentralizedTester {
                 encryptedText = new byte[length];
                 rand.nextBytes(encryptedText);
                 knownText = Arrays.copyOf(encryptedText, Configurations.KNOWN_TEXT_SIZE);
-                encryptedText = Encrypt.encrypter(keys.get(key).getBytes(), encryptedText);
+                encryptedText = Crypto.encrypter(keys.get(key).getBytes(), encryptedText);
                 
                 System.out.println("Key " + i + ": " + keys.get(key));
 //                System.out.println(knownText);            
@@ -81,7 +80,7 @@ public class AttackerCentralizedTester {
                     
                     for (String actualKey : keys) {
                         try{
-                            byte[] decrypted = Decrypt.decrypter(actualKey.getBytes(), encryptedText);
+                            byte[] decrypted = Crypto.decrypter(actualKey.getBytes(), encryptedText);
                             String text = new String(decrypted);
                             String KNOWN = new String(knownText);
 

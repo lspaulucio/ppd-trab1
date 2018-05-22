@@ -1,7 +1,7 @@
 package br.inf.ufes.ppd.application;
 
 import br.inf.ufes.ppd.implementation.Configurations;
-import br.inf.ufes.ppd.utils.Decrypt;
+import br.inf.ufes.ppd.utils.Crypto;
 import br.inf.ufes.ppd.utils.FileTools;
 import java.io.*;
 import java.util.*;
@@ -27,7 +27,7 @@ public class AttackerCentralized {
             {
                 try{
                     byte[] key = file.next().getBytes();
-                    byte[] decrypted = Decrypt.decrypter(key, message);
+                    byte[] decrypted = Crypto.decrypter(key, message);
 
                     String text = new String(decrypted);
                     

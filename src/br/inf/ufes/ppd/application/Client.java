@@ -3,7 +3,7 @@ package br.inf.ufes.ppd.application;
 import br.inf.ufes.ppd.Guess;
 import br.inf.ufes.ppd.Master;
 import br.inf.ufes.ppd.implementation.Configurations;
-import br.inf.ufes.ppd.utils.Encrypt;
+import br.inf.ufes.ppd.utils.Crypto;
 import br.inf.ufes.ppd.utils.FileTools;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
@@ -51,7 +51,7 @@ public class Client {
                 encryptedText = new byte[length];
                 new Random().nextBytes(encryptedText);
                 knownText = new String(encryptedText, 0, 10);
-                encryptedText = Encrypt.encrypter(keys.get(key).getBytes(), encryptedText);
+                encryptedText = Crypto.encrypter(keys.get(key).getBytes(), encryptedText);
                 System.out.println("Key: " + keys.get(key));
             }
             

@@ -3,7 +3,7 @@ package br.inf.ufes.ppd.implementation;
 import br.inf.ufes.ppd.Guess;
 import br.inf.ufes.ppd.Slave;
 import br.inf.ufes.ppd.SlaveManager;
-import br.inf.ufes.ppd.utils.Decrypt;
+import br.inf.ufes.ppd.utils.Crypto;
 import br.inf.ufes.ppd.utils.FileTools;
 import java.rmi.RemoteException;
 import java.util.*;
@@ -116,7 +116,7 @@ public class SlaveImpl implements Slave {
                 try {
                     String actualKey = keys.get((int) currentIndex); //Get current key
 
-                    byte[] decrypted = Decrypt.decrypter(actualKey.getBytes(), encryptedText);
+                    byte[] decrypted = Crypto.decrypter(actualKey.getBytes(), encryptedText);
 
                     String decryptedText = new String(decrypted);
 
