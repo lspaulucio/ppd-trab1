@@ -171,6 +171,5 @@ public class SlaveImpl implements Slave {
                 }
             }
         }
-        
     }
 }

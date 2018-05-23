@@ -28,9 +28,9 @@ public class AttackerCentralizedTester {
     { 
         try {
             
-            if(args.length < 4){
+            if(args.length < 3){
                 System.err.println("Missing parameters");
-                throw new Exception("Attacker Centralized Tester.\nUsage: <s|r> <NumberAttacks> <InitialRange> <FinalRange> [<NumberOfSamples>]");
+                throw new Exception("Attacker Centralized Tester.\nUsage: <s|r> <InitialRange> <FinalRange> [<NumberOfSamples>]");
             }
             
             keys = FileTools.readDictionary(Configurations.DICTIONARY_PATH);
@@ -38,11 +38,10 @@ public class AttackerCentralizedTester {
             Random rand = new Random();
             String type = args[0];
             
-            int numberAttacks = new Integer(args[1]);
-            int initialRange = new Integer(args[2]);
-            int finalRange = new Integer(args[3]);
-            int samples = (args.length < 5) ? Configurations.NUMBER_SAMPLES : new Integer(args[4]);
-            int division = (finalRange - initialRange)/numberAttacks;
+            int initialRange = new Integer(args[1]);
+            int finalRange = new Integer(args[2]);
+            int samples = (args.length < 4) ? Configurations.NUMBER_SAMPLES : new Integer(args[3]);
+            int numBreaks = (finalRange - initialRange)/Configurations.BREAKS_LENGTH;
             
             byte[] knownText;
             byte[] encryptedText;
@@ -50,7 +49,7 @@ public class AttackerCentralizedTester {
             
             List<Tupla> dados = new ArrayList<>();
             
-            for(int i = 0; i <= numberAttacks; i++){
+            for(int i = 0; i <= numBreaks; i++){
                 
                 int key = rand.nextInt(Configurations.DICTIONARY_SIZE);
                 int length;
@@ -60,7 +59,7 @@ public class AttackerCentralizedTester {
                 }
                 else{
                     length = initialRange;
-                    initialRange += division;
+                    initialRange += Configurations.BREAKS_LENGTH;
                 }
 
                 System.out.println("Size: " + length);

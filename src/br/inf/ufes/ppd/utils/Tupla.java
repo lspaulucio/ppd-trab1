@@ -10,6 +10,7 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.Calendar;
 import java.util.List;
 
 /**
@@ -50,7 +51,7 @@ public class Tupla {
             dir.mkdir();
         }
         
-        String filename = Configurations.MEASURE_FOLDER + "dados.csv";
+        String filename = Configurations.MEASURE_FOLDER + Calendar.getInstance().getTime().toString() + "_dados.csv";
         
         try {
             BufferedWriter out = new BufferedWriter(new FileWriter(new File(filename)));
