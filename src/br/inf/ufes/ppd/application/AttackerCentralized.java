@@ -20,8 +20,8 @@ public class AttackerCentralized {
             //Abre o dicionario
             Scanner file = new Scanner(new FileReader(Configurations.DICTIONARY_PATH));
             
-            String knowText = args[1];//"JFIF";
             byte[] message = FileTools.readFile(args[0]);//"TestFiles/desafio.cipher"
+            String knowText = args[1];//"JFIF";
             
             while(file.hasNext())
             {

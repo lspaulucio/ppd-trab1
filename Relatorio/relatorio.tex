@@ -41,6 +41,56 @@
 \usepackage{multicol}
 \usepackage{multirow}
 % ---
+
+% Permite incluir listagens de código com o comando \lstinputlisting{}.
+\usepackage{listings}
+\usepackage{caption}
+\DeclareCaptionFont{white}{\color{white}}
+\DeclareCaptionFormat{listing}{\colorbox{gray}{\parbox{\textwidth}{#1#2#3}}}
+\captionsetup[lstlisting]{format=listing,labelfont=white,textfont=white}
+\renewcommand{\lstlistingname}{Listagem}
+\definecolor{mygray}{rgb}{0.5,0.5,0.5}
+\lstset{
+	basicstyle=\scriptsize,
+	breaklines=true,
+%	numbers=left,
+	numbersep=5pt,
+	numberstyle=\tiny\color{mygray}, 
+	rulecolor=\color{black},
+	showstringspaces=false,
+	tabsize=2,
+    inputencoding=utf8,
+    extendedchars=true,
+    literate=%
+    {é}{{\'{e}}}1
+    {è}{{\`{e}}}1
+    {ê}{{\^{e}}}1
+    {ë}{{\¨{e}}}1
+    {É}{{\'{E}}}1
+    {Ê}{{\^{E}}}1
+    {û}{{\^{u}}}1
+    {ù}{{\`{u}}}1
+    {â}{{\^{a}}}1
+    {à}{{\`{a}}}1
+    {á}{{\'{a}}}1
+    {ã}{{\~{a}}}1
+    {Á}{{\'{A}}}1
+    {Â}{{\^{A}}}1
+    {Ã}{{\~{A}}}1
+    {ç}{{\c{c}}}1
+    {Ç}{{\c{C}}}1
+    {õ}{{\~{o}}}1
+    {ó}{{\'{o}}}1
+    {ô}{{\^{o}}}1
+    {Õ}{{\~{O}}}1
+    {Ó}{{\'{O}}}1
+    {Ô}{{\^{O}}}1
+    {î}{{\^{i}}}1
+    {Î}{{\^{I}}}1
+    {í}{{\'{i}}}1
+    {Í}{{\~{Í}}}1
+}
+
 	
 % ---
 % Pacotes adicionais, usados apenas no âmbito do Modelo Canônico do abnteX2
@@ -258,7 +308,49 @@ Esse trabalho tem por objetivo praticar programação paralela usando o \textit{
 
 \chapter{Implementação} 
 
+
 \section{Estrutura de Dados}
+
+\section{Decisões de Projeto}
+Sub ataques
+
+vetor separado de guess
+
+vetor separado de ataques
+
+o q fazer se nao tiver escravos
+
+usar copia de slaves para iniciar ataque
+
+a parada do checkpoint e do time
+
+
+\section{Cliente}
+
+O programa cliente recebe como argumentos: o nome do arquivo criptografado, o trecho conhecido do texto original e opcionalmente um terceiro parâmetro que indica o tamanho do vetor de \textit{bytes} aleatório que será gerado em caso do arquivo criptografado não existir.
+
+Assim, o cliente é responsável por localizar o mestre utilizando o \textit{Registry} e solicitar o serviço de ataque através do método \textit{attack}. Ao solicitar o serviço o cliente passa o arquivo criptografado e o trecho conhecido. Caso o nome do arquivo fornecido como argumento para o programa cliente seja inválido o programa cliente é responsável por gerar um vetor aleatório de bytes, cujo tamanho será igual ao 3º parâmetro fornecido ou, caso esse não exista, um tamanho aleatório na faixa de 1Kb a 100Kb.
+
+O comando utilizado para iniciar o cliente é:
+
+
+
+\section{Escravo}
+O escravo recebe como parâmetros: o caminho para o arquivo de dicionário, o nome do escravo que será criado e endereço do \textit{registry}. Caso esses parâmetros não sejam fornecidos ele pega os valores padrões existentes em um arquivo de configurações.
+
+Inicialmente, o escravo deve procurar no \textit{registry} uma referência para o mestre, e assim que ele conseguir ele solicita ao mestre para ser adicionado através do serviço de \textit{addSlave} fornecido pelo mestre. Após estar registrado
+no mestre o escravo fica aguardando alguma solicitação de subataque do mestre. 
+
+O comando para se iniciar um escravo é:
+
+\begin{lstlisting}
+java br.inf.ufes.ppd.application.Client <arquivo> <Trecho conhecido> [<Tamanho do vetor de bytes>]\end{lstlisting}
+
+%falar desse comando ai -Djava.rmi.server.hostname=(IP DA MAQUINA_HOST) 
+
+\section{Mestre}
+
+
 
 
 \section{Problemas Durante a Implementação}
@@ -271,25 +363,30 @@ atender as requisições que chegam dos cliente.
 \subsection{Cliente e Escravo}
 O cliente foi o primeiro a ser implementado. Devido a sua simplicidade não foram encontrados problemas durante sua implementação.
 
-%O programa cliente recebe como argumentos: o nome do arquivo criptografado, o trecho conhecido do texto original e opcionalmente um terceiro parâmetro que indica o tamanho do vetor de \textit{bytes} em caso de o arquivo criptografado não existir.
-%
-%Assim, o cliente é responsável por localizar o mestre utilizando o \textit{Registry} e solicitar o serviço de ataque através do método \textit{attack}. Ao solicitar o serviço o cliente passa o arquivo criptografado e o trecho conhecido. Caso o nome do arquivo fornecido como argumento para o programa cliente seja inválido o programa cliente é responsável por gerar um vetor aleatório de bytes, cujo tamanho será igual ao 3º parâmetro fornecido ou, caso esse não exista, um tamanho aleatório na faixa de 1Kb a 100Kb.
-
 Já na implementação do escravo, que também não era muito complicada, um problema ocorreu, apesar de 
 ter sido de fácil solução.
 
 O problema que surgiu foi durante a implementação do método \textit{startSubAttack}. Nos primeiros testes notou-se que os escravos não realizavam outros sub-ataques em paralelo, assim, ao analisar o código percebeu-se que não estavam sendo criadas \textit{threads} no método para realizar o ataque, dessa forma o escravo ficava bloqueado durante a execução de um ataque não atendendo outras requisições que chegavam. Ao se criar \textit{threads} esse problema foi solucionado.
+
+Outro problema que surgiu durante a implementação do escravo foi o modo de verificar se o trecho conhecido existia no arquivo
+descriptografado, podendo assim ser um candidato a ser o arquivo original. Essa verificação estava sendo feita da seguinte
+forma: o array de bytes descriptografado era transformado em uma \textit{String} e a partir dela era usado o método dessa classe chamado \textit{contains}, que verifica se um uma \textit{substring} existe na \textit{string}. Porém ao se converter esse \textit{array} de \textit{bytes} em uma \textit{string} o Java utiliza uma codificação padrão interna que pode não ser a
+mesma do arquivo que foi criptografado fazendo com que várias ou nenhuma chave candidata possa ser encontrada.
 
 \subsection{Mestre}
 O grande problema durante a implementação do mestre foi relacionado a estabelecer uma boa estrutura de dados para que fosse
 possível realizar o gerenciamento dos escravos e ataques. No início do desenvolvimento a estrutura utilizada não possuía a ideia de subataques, isso fez com que surgisse um problema na hora da divisão de serviço entre os escravos. 
 
 Como cada ataque possuía um número único de identificação ao dividir o trabalho entre os escravos eles recebiam esse mesmo número, assim, quando um escravo mandava um checkpoint, duas coisas estavam ocorrendo: 
+
 \begin{itemize}
-\item Quando um escravo que recebia a primeira parte do serviço enviava um checkpoint ele era armazenado na estrutura de controle do ataque, porém quando um escravo que recebeu um intervalo de índices maior ao enviar o primeiro checkpoint já eliminava a informação do primeiro escravo, pois o checkpoint mais atual era salvo no lugar do anterior na estrutura de controle do ataque. Assim não se tinha uma forma de verificar o status de ataque de cada escravo, pois o que recebia o maior índice "dominava" nos checkpoints.
-\item A verificação para determinar se um trabalho havia terminado era baseada no índice recebido, se ele fosse igual ao último significava que havia terminado. Assim, quando o escravo que recebeu o maior índice terminava seu trabalho o mestre 
+
+	\item Quando um escravo que recebia a primeira parte do serviço enviava um checkpoint ele era armazenado na estrutura de controle do ataque, porém quando um escravo que recebeu um intervalo de índices maior ao enviar o primeiro checkpoint já eliminava a informação do primeiro escravo, pois o checkpoint mais atual era salvo no lugar do anterior na estrutura de controle do ataque. Assim não se tinha uma forma de verificar o status de ataque de cada escravo, pois o que recebia o maior índice "dominava" nos checkpoints.
+
+	\item A verificação para determinar se um trabalho havia terminado era baseada no índice recebido, se ele fosse igual ao último significava que havia terminado. Assim, quando o escravo que recebeu o maior índice terminava seu trabalho o mestre 
 verificava que o serviço tinha acabado e enviava a resposta ao cliente, porém os outros escravos que estavam trabalhando no
 mesmo ataque podiam não ter terminado a sua parte. Com isso, o mestre enviava uma resposta de um trabalho incompleto para o cliente.
+
 \end{itemize}
 
 A solução para resolver esse problema foi a criação de subataques para um ataque. Dessa forma, um ataque solicitado pelo cliente é dividido em vários subataques e cada escravo fica responsável por um, assim, ao enviar um checkpoint estará salvando em seu próprio subataque o andamento dos índices, fazendo com que o primeiro problema não ocorresse mais. Outro ponto, é que verificar se um trabalho terminou basta apenas que o mestre cheque se todos os subataques referentes àquele ataque foram terminados, isso garante que o mestre só irá enviar a resposta ao cliente quando todos os escravos tiverem terminado sua tarefa.
@@ -297,14 +394,16 @@ A solução para resolver esse problema foi a criação de subataques para um at
 Outro problema que surgiu durante o desenvolvimento do mestre foi com relação a concorrência no acesso de variáveis. Existiram
 algumas partes da estrutura que não estavam tendo sua execução serializada com o \textit{synchronized} de Java, e ao se adicionar vários clientes e escravos ocorreram exceções relacionados a concorrência. Um caso onde esse problema ocorreu foi quando o mestre ficava checando se um trabalho havia terminado para enviar a resposta ao cliente. Para realizar essa verificação o mestre ficava checando a todo o momento uma variável booleana que representava o \textit{status} do trabalho, se fosse falsa o trabalho não tinha terminado, caso contrário já tinha terminado. O problema era que quando o trabalho terminava e essa váriavel de \textit{status} ia ser modificada o mestre concorrentemente checava ela fazendo com que ocorresse exceção de acesso concorrente. Esse problema foi corrigido utilizando a opção \textit{wait} e \textit{notify} de Java que faz com que a \textit{thread} que verifica o \textit{status} do trabalho ficasse dormindo e quando o trabalho estivesse terminado ele era notificado e enviava a resposta para o cliente.
 
-
 \chapter{Interoperabilidade}
 A interoperabilidade do trabalho foi testada com os seguintes grupos:
+
 \begin{itemize}
-\item Grupo: David Morosini e Gustavo Monjardim.
-\item Grupo: André Barreto e Eric Santos.
-\item Grupo: Eduardo e Gustavo.
-\item Grupo: Eduardo e Thiago Borges.
+
+	\item Grupo: David Morosini e Gustavo Monjardim.
+	\item Grupo: André Barreto e Eric Santos.
+	\item Grupo: Eduardo e Gustavo.
+	\item Grupo: Eduardo e Thiago Borges.
+
 \end{itemize}
 
 \section{Problemas Encontrados}
@@ -312,21 +411,40 @@ Um problema que aconteceu durante um dos testes de interoperabilidade foi no uso
 
 Um outro problema que ocorreu foi que um grupo havia modificado a interface original adicionando um construtor com isso ocorria a exceção \textit{Unmarshalling Exception} que fazia com que não encontrasse as classes, pois em Java ao adicionar algum método a uma interface ele a considera uma nova versão diferente da original.
 
+Problema dos indices
+
+O restante dos problemas basicamente se relacionavam com o uso do registry
+
 \chapter{Análise de Desempenho} 
+Após a implementação do trabalho foram realizadas análises de desempenho com o objetivo de se conseguir observar se realmente
+há uma melhoria ao se utilizar sistemas distribuídos. As análises estão nas seções seguintes.
+
 \section{Máquinas e Equipamentos Utilizados}
-Nesse trabalho foi utilizado um computador com processador \textit{Intel Core i5-2410M CPU 2.30GHz x 4} com 6GB de 
-memória RAM e o Sistema Operacional utilizado foi o \textit{Linux Mint KDE 64-bit}.
+Para a realização das análises foram utilizados dois tipos de computadores:
 
+\begin{enumerate}
 
-Os computadores do laboratório processador \textit{AMD Athlon(tm) Dual Core Processor 5000B} com 4GB de memória RAM e o Sistema Operacional utilizado foi o \textit{Ubuntu 16.04.4 LTS}
+	\item Para a análise de desempenho de paralelismo em uma única máquina com vários escravos foi utilizado um notebook com processador \textit{Intel Core i5-2410M CPU 2.30GHz x 4} e 6GB de memória RAM com o Sistema Operacional \textit{Linux Mint KDE 64-bit}.
 
+	\item Já para a análise de desempenho distribuído foram utilizados os computadores do laboratório de graduação (LabGrad) que possuem as seguintes configurações: processador \textit{AMD Athlon(tm) Dual Core Processor 5000B} com 4GB de memória RAM e o Sistema Operacional utilizado foi o \textit{Ubuntu 16.04.4 LTS}.
 
+\end{enumerate}
+
+Inicialmente, a ideia era realizar todos os testes nas máquinas do LabGrad porém essa divisão dos testes foi realizada pois ambos os LabGrads estavam reservados para aulas, e quando não estavam os outros alunos da graduação estavam utilizando, fazendo com que a disponibilidade de tempo nos laboratórios fosse bem pequena. 
+
+Outra questão é que não seria possível testar o sistema em várias máquinas em casa já que só tinha disponível um computador, sendo assim, optei por fazer a análise de paralelismo no computador pessoal e deixar a análise de desempenho distribuído para ser realizada no LabGrad.
 
 \section{Desempenho de Paralelismo em uma Única Máquina}
 
+\begin{figure}[!htb]
+\centering
+\caption{Legenda}
+\includegraphics[scale=0.5]{figuras/Hardware/pt4800.png}
+\label{fig:pt4800}
+\end{figure}
 
 
-\section{Várias Máquinas}
+\section{Desempenho Distribuído em Várias Máquinas}
 
 % Conclusão
 % ---
@@ -342,8 +460,6 @@ Observa-se ainda que não é possível atingir o speed up ideal segundo aLei de 
 Outro ponto que é importante e que foi possível notar durante a implementação desse trabalho é a complexidade de funcionamento que existe na máquina responsável por realizar todo o gerenciamento, nesse caso representada pelo mestre. Ele tem que lidar: com o controle de máquinas ativas, com a distribuição das tarefas, com o controle do status das tarefas, com o controle de concorrência, redistribuição de tarefas, entre outros. Além de todas essas tarefas ele ainda tem que cuidar do acesso
 concorrente à variáveis de controle, que é um grande problema ao se trabalhar com muitas \textit{threads}, assim, percebe-se a necessidade que sempre vai existir para que algum pedaço do programa não seja paralelizável.
 
-
- 
 
 falar das analises
 

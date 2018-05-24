@@ -19,7 +19,7 @@ public class MasterServer {
         
         //args[0] Registry address
         
-        String REGISTRY_ADDRESS = (args.length < 1) ? Configurations.REGISTRY_ADDRESS : args[2]; 
+        String REGISTRY_ADDRESS = (args.length < 1) ? Configurations.REGISTRY_ADDRESS : args[0]; 
         
         try {
         
