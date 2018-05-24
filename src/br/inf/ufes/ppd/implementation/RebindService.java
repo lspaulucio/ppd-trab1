@@ -19,7 +19,7 @@ public class RebindService extends TimerTask {
     private final Slave slaveRef;
     private final String slaveName;
     private final UUID slaveUID;
-    
+    private final String regist;
     /**
      * Construtor do serviço de rebind.
      * @param m referência para o mestre.
@@ -27,11 +27,12 @@ public class RebindService extends TimerTask {
      * @param name nome do escravo.
      * @param uid identificador unico do escravo.
      */
-    public RebindService(Master m, Slave s, String name, UUID uid){
+    public RebindService(Master m, Slave s, String name, UUID uid, String reg){
         this.masterRef = m;
         this.slaveRef = s;
         this.slaveName = name;
         this.slaveUID = uid;
+        this.regist = reg;
     }
     
     @Override
@@ -47,7 +48,7 @@ public class RebindService extends TimerTask {
 
             //Master down, so try to find another master on registry
             try {
-                Registry registry = LocateRegistry.getRegistry(Configurations.REGISTRY_ADDRESS);
+                Registry registry = LocateRegistry.getRegistry(regist);
                 Master m = (Master) registry.lookup(Configurations.REGISTRY_MASTER_NAME);
                 
                 m.addSlave(slaveRef, slaveName, slaveUID);

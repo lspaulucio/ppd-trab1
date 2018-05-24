@@ -35,7 +35,7 @@ public class Client {
             
             Random rand = new Random();
             String filename = args[0];
-            String knownText = args[1];
+            byte[] knownText = new String(args[1]).getBytes();
             byte[] encryptedText;
             
             encryptedText = FileTools.readFile(filename);
@@ -49,8 +49,8 @@ public class Client {
                 System.out.println("A random bytes vector will be generated. Random vector size: " + length);
                 
                 encryptedText = new byte[length];
-                new Random().nextBytes(encryptedText);
-                knownText = new String(encryptedText, 0, 10);
+                rand.nextBytes(encryptedText);
+                knownText = Arrays.copyOfRange(encryptedText, 0, Configurations.KNOWN_TEXT_SIZE);
                 encryptedText = Crypto.encrypter(keys.get(key).getBytes(), encryptedText);
                 System.out.println("Key: " + keys.get(key));
             }
@@ -61,7 +61,7 @@ public class Client {
             
             System.out.println("Client started. Sending attack request");
             
-            Guess[] guessVector = m.attack(encryptedText, knownText.getBytes());
+            Guess[] guessVector = m.attack(encryptedText, knownText);
             
             if(guessVector.length != 0){
 

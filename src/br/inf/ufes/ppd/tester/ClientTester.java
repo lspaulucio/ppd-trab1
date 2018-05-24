@@ -79,7 +79,7 @@ public class ClientTester {
                 
                 encryptedText = new byte[length];
                 rand.nextBytes(encryptedText);
-                knownText = Arrays.copyOf(encryptedText, Configurations.KNOWN_TEXT_SIZE);
+                knownText = Arrays.copyOfRange(encryptedText, 0, Configurations.KNOWN_TEXT_SIZE);
                 encryptedText = Crypto.encrypter(keys.get(key).getBytes(), encryptedText);
                 
                 System.out.println("Key " + i + ": " + keys.get(key));

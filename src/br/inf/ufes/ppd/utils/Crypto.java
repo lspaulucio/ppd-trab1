@@ -70,32 +70,43 @@ public class Crypto {
         return encrypted;
     }
     
-    public static boolean contains(byte[] array, byte[] sequence){
+    
+    /**
+     * Checa se um subarray existe em um array.
+     * @param sequence subarray que se deseja verificar
+     * @param array array onde irá se verificar se existe o subarray.   
+     * @return True se existe, False se não.
+    */
+    public static boolean contains(byte[] sequence, byte[] array){
         
-        boolean exists = true;
-        
-        for(int i = 0; i < array.length; i++){
+        if(sequence.length <= array.length){
             
-            if(array[i] == sequence[0]){
+            boolean exists;
+            
+            for(int i = 0; i < array.length; i++){
                 
-                for(int j = 1; j < sequence.length; j++){
-                    
-                    if( i + j >= array.length){
-                        break;
-                    }    
-                        if(array[i+j] != sequence[j]){
-                            exists = false;
-                            break;
-                        }
-                    
-                }
+                exists = true;
                 
-                if(exists){
-                    return true;
+                if(i + sequence.length > array.length)
+                    return false;
+                
+                if(array[i] == sequence[0]){
+
+                    for(int j = 1; j < sequence.length; j++){
+
+                            if(array[i+j] != sequence[j]){
+                                exists = false;
+                                break;
+                            }
+                    }
+
+                    if(exists){
+                        return true;
+                    }
                 }
             }
         }
-        
-        return true;
+
+        return false;
     }
 }

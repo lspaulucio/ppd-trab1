@@ -44,7 +44,7 @@ public class SlaveServer {
             
             //Creating rebind service
             Timer timer = new Timer();   
-            RebindService rs = new RebindService(m, slaveRef, SLAVE_NAME, slave.getUid());            
+            RebindService rs = new RebindService(m, slaveRef, SLAVE_NAME, slave.getUid(), REGISTRY_ADDRESS);            
             timer.scheduleAtFixedRate(rs, 0, Configurations.REBIND_TIME);  // 0 = delay, REBIND_TIME = frequence
             
             System.out.println("Slave: " + SLAVE_NAME + " ready");

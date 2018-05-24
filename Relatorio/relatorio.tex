@@ -263,7 +263,9 @@ Esse trabalho tem por objetivo praticar programação paralela usando o \textit{
 
 \section{Problemas Durante a Implementação}
 Durante o desenvolvimento do trabalho alguns problemas surgiram fazendo com que fosse necessário realizar algumas mudanças
-na estrutura de dados e na lógica de programação. 
+na estrutura de dados e na lógica de programação. A maioria deles ocorreu durante o desenvolvimento do mestre, visto que
+é o componente mais complexo do trabalho já que é responsável por gerenciar todos os escravos e ataques que ocorrem, além de 
+atender as requisições que chegam dos cliente. 
 
 
 \subsection{Cliente e Escravo}
@@ -279,23 +281,36 @@ ter sido de fácil solução.
 O problema que surgiu foi durante a implementação do método \textit{startSubAttack}. Nos primeiros testes notou-se que os escravos não realizavam outros sub-ataques em paralelo, assim, ao analisar o código percebeu-se que não estavam sendo criadas \textit{threads} no método para realizar o ataque, dessa forma o escravo ficava bloqueado durante a execução de um ataque não atendendo outras requisições que chegavam. Ao se criar \textit{threads} esse problema foi solucionado.
 
 \subsection{Mestre}
-Os principais problemas que surgiram ocorreram durante a implementação do mestre, que é o responsável por gerenciar
-todos os escravos e todos os ataques que estão ocorrendo no momento.
+O grande problema durante a implementação do mestre foi relacionado a estabelecer uma boa estrutura de dados para que fosse
+possível realizar o gerenciamento dos escravos e ataques. No início do desenvolvimento a estrutura utilizada não possuía a ideia de subataques, isso fez com que surgisse um problema na hora da divisão de serviço entre os escravos. 
+
+Como cada ataque possuía um número único de identificação ao dividir o trabalho entre os escravos eles recebiam esse mesmo número, assim, quando um escravo mandava um checkpoint, duas coisas estavam ocorrendo: 
+\begin{itemize}
+\item Quando um escravo que recebia a primeira parte do serviço enviava um checkpoint ele era armazenado na estrutura de controle do ataque, porém quando um escravo que recebeu um intervalo de índices maior ao enviar o primeiro checkpoint já eliminava a informação do primeiro escravo, pois o checkpoint mais atual era salvo no lugar do anterior na estrutura de controle do ataque. Assim não se tinha uma forma de verificar o status de ataque de cada escravo, pois o que recebia o maior índice "dominava" nos checkpoints.
+\item A verificação para determinar se um trabalho havia terminado era baseada no índice recebido, se ele fosse igual ao último significava que havia terminado. Assim, quando o escravo que recebeu o maior índice terminava seu trabalho o mestre 
+verificava que o serviço tinha acabado e enviava a resposta ao cliente, porém os outros escravos que estavam trabalhando no
+mesmo ataque podiam não ter terminado a sua parte. Com isso, o mestre enviava uma resposta de um trabalho incompleto para o cliente.
+\end{itemize}
+
+A solução para resolver esse problema foi a criação de subataques para um ataque. Dessa forma, um ataque solicitado pelo cliente é dividido em vários subataques e cada escravo fica responsável por um, assim, ao enviar um checkpoint estará salvando em seu próprio subataque o andamento dos índices, fazendo com que o primeiro problema não ocorresse mais. Outro ponto, é que verificar se um trabalho terminou basta apenas que o mestre cheque se todos os subataques referentes àquele ataque foram terminados, isso garante que o mestre só irá enviar a resposta ao cliente quando todos os escravos tiverem terminado sua tarefa.
+
+Outro problema que surgiu durante o desenvolvimento do mestre foi com relação a concorrência no acesso de variáveis. Existiram
+algumas partes da estrutura que não estavam tendo sua execução serializada com o \textit{synchronized} de Java, e ao se adicionar vários clientes e escravos ocorreram exceções relacionados a concorrência. Um caso onde esse problema ocorreu foi quando o mestre ficava checando se um trabalho havia terminado para enviar a resposta ao cliente. Para realizar essa verificação o mestre ficava checando a todo o momento uma variável booleana que representava o \textit{status} do trabalho, se fosse falsa o trabalho não tinha terminado, caso contrário já tinha terminado. O problema era que quando o trabalho terminava e essa váriavel de \textit{status} ia ser modificada o mestre concorrentemente checava ela fazendo com que ocorresse exceção de acesso concorrente. Esse problema foi corrigido utilizando a opção \textit{wait} e \textit{notify} de Java que faz com que a \textit{thread} que verifica o \textit{status} do trabalho ficasse dormindo e quando o trabalho estivesse terminado ele era notificado e enviava a resposta para o cliente.
 
 
 \chapter{Interoperabilidade}
 A interoperabilidade do trabalho foi testada com os seguintes grupos:
 \begin{itemize}
-\item Grupo do David e
-\item Grupo do André e Eric.
-\item Grupo do Eduardo e Gustavo.   VER SE TIRA DEPOIS
+\item Grupo: David Morosini e Gustavo Monjardim.
+\item Grupo: André Barreto e Eric Santos.
+\item Grupo: Eduardo e Gustavo.
+\item Grupo: Eduardo e Thiago Borges.
 \end{itemize}
 
 \section{Problemas Encontrados}
-falar da WIFI
+Um problema que aconteceu durante um dos testes de interoperabilidade foi no uso de um roteador, quando todo mundo estava conectado à rede um dos grupos abria o mestre e os outros criavam escravos, porém percebeu-se que havia uma demora de cerca de 2 a 3 minutos para que o mestre recebesse a solicitação e registrasse o cliente. E mais, ao se criar um ataque havia uma demora muito grande para que os escravos recebessem a solicitação do mestre, isso fez com que fosse inviável o uso do roteador para a realização dos testes.
 
-
-
+Um outro problema que ocorreu foi que um grupo havia modificado a interface original adicionando um construtor com isso ocorria a exceção \textit{Unmarshalling Exception} que fazia com que não encontrasse as classes, pois em Java ao adicionar algum método a uma interface ele a considera uma nova versão diferente da original.
 
 \chapter{Análise de Desempenho} 
 \section{Máquinas e Equipamentos Utilizados}
@@ -303,15 +318,13 @@ Nesse trabalho foi utilizado um computador com processador \textit{Intel Core i5
 memória RAM e o Sistema Operacional utilizado foi o \textit{Linux Mint KDE 64-bit}.
 
 
-Pegar informações dos PCs do LabGrad.
+Os computadores do laboratório processador \textit{AMD Athlon(tm) Dual Core Processor 5000B} com 4GB de memória RAM e o Sistema Operacional utilizado foi o \textit{Ubuntu 16.04.4 LTS}
 
 
 
-\section{Uma Única Máquina}
+\section{Desempenho de Paralelismo em uma Única Máquina}
 
-\subsection{Centralizado}
 
-\subsection{Paralelo com Vários Escravos}
 
 \section{Várias Máquinas}
 

@@ -66,7 +66,7 @@ public class AttackerCentralizedTester {
                 
                 encryptedText = new byte[length];
                 rand.nextBytes(encryptedText);
-                knownText = Arrays.copyOf(encryptedText, Configurations.KNOWN_TEXT_SIZE);
+                knownText = Arrays.copyOfRange(encryptedText, 0, Configurations.KNOWN_TEXT_SIZE);
                 encryptedText = Crypto.encrypter(keys.get(key).getBytes(), encryptedText);
                 
                 System.out.println("Key " + i + ": " + keys.get(key));
@@ -80,10 +80,8 @@ public class AttackerCentralizedTester {
                     for (String actualKey : keys) {
                         try{
                             byte[] decrypted = Crypto.decrypter(actualKey.getBytes(), encryptedText);
-                            String text = new String(decrypted);
-                            String KNOWN = new String(knownText);
 
-                            if(text.contains(KNOWN))
+                            if(Crypto.contains(knownText, decrypted))
                             {
                                 System.out.println("Key found: " + actualKey);
                             }

@@ -20,7 +20,7 @@ public class AttackerCentralized {
             //Abre o dicionario
             Scanner file = new Scanner(new FileReader(Configurations.DICTIONARY_PATH));
             
-            String KNOWN_TEXT = args[1];//"JFIF";
+            String knowText = args[1];//"JFIF";
             byte[] message = FileTools.readFile(args[0]);//"TestFiles/desafio.cipher"
             
             while(file.hasNext())
@@ -29,9 +29,9 @@ public class AttackerCentralized {
                     byte[] key = file.next().getBytes();
                     byte[] decrypted = Crypto.decrypter(key, message);
 
-                    String text = new String(decrypted);
+//                    String text = new String(decrypted);
                     
-                    if(text.contains(KNOWN_TEXT))
+                    if(Crypto.contains(knowText.getBytes(), decrypted))
                     {
                         System.out.println("Key found: " + new String(key));
                         FileTools.saveResult(new String(key) + ".msg", decrypted);
@@ -48,9 +48,11 @@ public class AttackerCentralized {
             
         }catch (FileNotFoundException e) {
             System.err.println(e.getMessage());
+            e.printStackTrace();
             
         }catch (Exception e){
             System.err.println(e.getMessage());
+            e.printStackTrace();
         }
     }
 }

@@ -101,7 +101,6 @@ public class SlaveImpl implements Slave {
         @Override
         public void run()
         {
-            String KNOWN_TEXT = new String(knownText);
 
             System.out.println("New SubAttack: " + subAttackID);
             //Making a timer to notify master about currentIndex
@@ -118,10 +117,8 @@ public class SlaveImpl implements Slave {
 
                     byte[] decrypted = Crypto.decrypter(actualKey.getBytes(), encryptedText);
 
-                    String decryptedText = new String(decrypted);
-
                     //Checking if known text exists in decrypted text
-                    if (decryptedText.contains(KNOWN_TEXT)) {
+                    if (Crypto.contains(knownText, decrypted)) {
 
                         Guess currentGuess = new Guess();
                         currentGuess.setKey(actualKey);
