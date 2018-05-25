@@ -17,7 +17,7 @@ public class Configurations {
     
     //Message and dictionart configurations
     public static final int KNOWN_TEXT_SIZE = 10;
-    public static final int DICTIONARY_SIZE = 80368;
+    public static final int DICTIONARY_SIZE = 80367;
     public static final String DICTIONARY_PATH = "dictionary.txt";
     
     //Master and Slave configurations
