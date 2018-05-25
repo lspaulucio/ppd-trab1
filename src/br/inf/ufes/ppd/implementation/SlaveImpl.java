@@ -110,36 +110,43 @@ public class SlaveImpl implements Slave {
             timer.scheduleAtFixedRate(checkTask, 0, Configurations.CHECKPOINT_TIME);  // 0 = delay, CHECKPOINT_TIME = frequence
 
             //Subattack execution
-            for (; currentIndex < finalIndex; currentIndex++) {
+            try{
+                for (; currentIndex <= finalIndex; currentIndex++) {
 
-                try {
-                    String actualKey = keys.get((int) currentIndex); //Get current key
+                    try {
+                        String actualKey = keys.get((int) currentIndex); //Get current key
 
-                    byte[] decrypted = Crypto.decrypter(actualKey.getBytes(), encryptedText);
+                        byte[] decrypted = Crypto.decrypter(actualKey.getBytes(), encryptedText);
 
-                    //Checking if known text exists in decrypted text
-                    if (Crypto.contains(knownText, decrypted)) {
+                        //Checking if known text exists in decrypted text
+                        if (Crypto.contains(knownText, decrypted)) {
 
-                        Guess currentGuess = new Guess();
-                        currentGuess.setKey(actualKey);
-                        currentGuess.setMessage(decrypted);
+                            Guess currentGuess = new Guess();
+                            currentGuess.setKey(actualKey);
+                            currentGuess.setMessage(decrypted);
 
-                        smRef.foundGuess(getUid(), subAttackID, currentIndex, currentGuess);
+                            smRef.foundGuess(getUid(), subAttackID, currentIndex, currentGuess);
 
-    //                    System.out.println("Key found: " + actualKey);
+        //                    System.out.println("Key found: " + actualKey);
+                        }
+
+                    } catch (javax.crypto.BadPaddingException e) {
+                        // essa excecao e jogada quando a senha esta incorreta
+                        // porem nao quer dizer que a senha esta correta se nao jogar essa excecao
+                        //System.err.println("Senha " + new String(key) + " invalida.");
+                    } catch (RemoteException e) {
+                        System.err.println("Error subattack service:\n" + e.getMessage());
                     }
-
-                } catch (javax.crypto.BadPaddingException e) {
-                    // essa excecao e jogada quando a senha esta incorreta
-                    // porem nao quer dizer que a senha esta correta se nao jogar essa excecao
-                    //System.err.println("Senha " + new String(key) + " invalida.");
-                } catch (RemoteException e) {
-                    System.err.println("Error subattack service:\n" + e.getMessage());
                 }
+            }catch(IndexOutOfBoundsException e){
+//              System.out.println("");
+                currentIndex++; //Adjusting index
             }
 
             timer.cancel(); //Closing task checkpoint
-
+            
+            currentIndex--; //Just because was incremented one more time
+            
             try {
                 smRef.checkpoint(getUid(), subAttackID, currentIndex); //End job. Sending last checkpoint            
                 System.out.println("Final checkpoint " + currentIndex);

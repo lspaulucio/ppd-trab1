@@ -58,7 +58,7 @@
 	numberstyle=\tiny\color{mygray}, 
 	rulecolor=\color{black},
 	showstringspaces=false,
-	tabsize=2,
+	tabsize=4,
     inputencoding=utf8,
     extendedchars=true,
     literate=%
@@ -299,7 +299,7 @@
 % ----------------------------------------------------------
 \chapter{Introdução} 
 Nas últimas décadas houve uma crescente demanda na área de processamento de dados, o que exigiu o desenvolvimento de máquinas
-mais poderosas. Porém, apesar da grande capacidade existentes nos novos computadores quando comparados aos primeiros a serem produzidos e até mesmo a computadores de uma década atrás principalmente ao se analisar capacidade de processamento e memória, eles ainda não são capazes de atender essas demandas de processamentos sozinhos. Por esse motivo foram desenvolvidas várias técnicas de concorrência o que contribuiu para a criação dos Sistemas Distribuídos.
+mais poderosas. Porém, apesar da grande capacidade existente nos novos computadores quando comparados aos primeiros a serem produzidos e até mesmo a computadores de uma década atrás principalmente ao se analisar capacidade de processamento e memória, eles ainda não são capazes de atender essas demandas de processamentos sozinhos. Por esse motivo foram desenvolvidas várias técnicas de concorrência o que contribuiu para a criação dos Sistemas Distribuídos.
 
 %Um Sistema Distribuído é um sistema onde os componentes de \textit{hardware} ou \textit{software} se localizam em regiões físicas diferentes mas estão interligados em rede de forma que consigam se comunicar e coordenar suas ações entre sí.
 
@@ -307,9 +307,93 @@ Esse trabalho tem por objetivo praticar programação paralela usando o \textit{
 
 
 \chapter{Implementação} 
+A implementação do trabalho foi feita utilizando a IDE NetBeans 8.2. Foram criados vários pacotes para facilitar a organização 
+do código e das implementações de cada elemento. O trabalho é composto dos seguintes pacotes:
 
+\begin{itemize}
+
+	\item \textbf{br.inf.ufes.ppd:} Nesse pacote estão as interfaces padrões com os serviços oferecidos pelo escravo,
+	cliente e mestre.
+	
+	\item \textbf{br.inf.ufes.ppd.application:} Nesse pacote estão as aplicações que oferecerão os serviços indicados nas  
+	interfaces. Estão nesse pacote as aplicações de Cliente, Escravo, Mestre e a aplicação que realiza o servço de forma
+	centralizada.
+
+	\item \textbf{br.inf.ufes.ppd.implementation:} Nesse pacote se encontram as implementações dos serviços que são 
+	fornecidos pelas aplicações do pacote anterior.
+	
+	\item \textbf{br.inf.ufes.ppd.tester:} No pacote \textit{tester} estão as aplicações criadas para obtenção automatizada
+	das 	métricas de desempenho que foram utilizadas para a análise efetuada ao final do trabalho.
+	
+	\item \textbf{br.inf.ufes.ppd.utils:} Por fim, nesse pacote estão as funcionalidades de criptografia e descriptografia e 
+	a de geração de dados em ".csv" para geração dos gráficos.
+		
+
+\end{itemize}
+
+Para o correto funcionamento das aplicações desenvolvidas no trabalho sempre é necessário adicionar a seguinte diretiva ao comando de inicialização de cada elemento.
+
+\begin{center}
+	\begin{lstlisting}
+		-Djava.rmi.server.hostname=(IP DA MAQUINA HOST)\end{lstlisting}
+\end{center}
+
+Essa diretiva é necessária para que o Java RMI possa adicionar a referência correta ao exportar um objeto remoto. 
+
+Outro comando que deve ser executado antes da inicialização de qualque elemento é o \textit{rmiregistry}. Ele deve ser
+executado dentro da pasta raiz onde se encontram as classes, no caso do NetBeans essa pasta é "build/classes/".
+Nessa pasta se encontra a pasta raiz do pacote do trabalho, nesse caso a pasta "br".
 
 \section{Estrutura de Dados}
+
+Como o cliente é bem simples ele não possui uma estrutura muito complexa, já que basicamente ele só localiza um mestre para solicitar o serviço de ataque enviando logo em seguida o arquivo criptografado e o trecho conhecido ficando bloqueado enquanto não recebe uma resposta do mestre. Portanto, sua estrutura não será discutida em detalhes.
+
+O escravo também não possuí muitas complexidades com relação a estrutura de dados, mas no seu serviço já existe um 
+diferencial que é o uso de \textit{threads}. Basicamente, ao receber uma solicitação de subataque ele cria uma \textit{thread} para executar o subataque de forma que se outro ataque for solicitado ele não fica bloqueado atendendo ao primeiro que chegou.
+A única informação que o escravo possui é seu ID de identificação que é único, e uma lista de chaves candidatas que é percorrida durante o ataque a fim de verificar se algumas delas produzem um arquivo que possua o trecho conhecido.
+Outra \textit{thread} é usada no serviço de \textit{rebind} do escravo ao mestre.
+
+A maior complexidade do trabalho foi na implementação do mestre. Como ele é o responsável pelo controle dos ataques, 
+da distribuição dos subataques, por responder o cliente, entre outras tarefas, torna-se necessário o uso de uma estrutura 
+de dados mais complexa para a realização de todas essas tarefas.
+
+Sendo assim, para a implementação do mestre foram criadas as seguintes estruturas de dados:
+
+\begin{itemize}
+
+	\item \textbf{SubAttackControl:} Essa estrutura armazena todas as informações de controle de um subataque: uma variável 
+	que diz se o ataque já terminou, o índice final do subataque e o último índice já verificado pelo escravo, através do
+	\textit{checkpoint}.
+	
+	\item \textbf{AttackControl:} Essa estrutura é responsável por possuir as informações de um ataque solicitado por um
+	cliente. Ele possui: a informação do tempo em que o ataque começou, possui uma variável que diz se o ataque está 
+	terminado, uma referência para a mensagem criptografada e para o trecho conhecido daquele ataque e por fim uma lista 
+	de subataques, que fazem parte daquele ataque.
+	
+	\item \textbf{SlaveControl:} Essa estrutura armazena as informações de cada escravo: nome, tempo do último checkpoint
+	recebido e a lista de subataques que aquele escravo foi encarregado de executar.
+	
+\end{itemize}
+
+
+
+
+
+\begin{itemize}
+
+
+	\item \textbf{HashMap de UUID em Escravos:}
+	
+	\item \textbf{HashMap de AtaqueID em Lista de Guess:}
+	
+	\item \textbf{HashMap de SubataqueID em AtaqueID:}
+	
+	\item \textbf{HashMap de AtaqueID em AttackControl:}
+	
+\end{itemize}
+
+
+
 
 \section{Decisões de Projeto}
 Sub ataques
@@ -333,10 +417,12 @@ Assim, o cliente é responsável por localizar o mestre utilizando o \textit{Reg
 
 O comando utilizado para iniciar o cliente é:
 
+\begin{lstlisting}
+java br.inf.ufes.ppd.application.Client <Arquivo> <Trecho> [<Tam. vetor bytes>]\end{lstlisting}
 
 
 \section{Escravo}
-O escravo recebe como parâmetros: o caminho para o arquivo de dicionário, o nome do escravo que será criado e endereço do \textit{registry}. Caso esses parâmetros não sejam fornecidos ele pega os valores padrões existentes em um arquivo de configurações.
+O escravo recebe como parâmetros: o caminho para o arquivo de dicionário, o nome do escravo que será criado e endereço do \textit{registry}. Caso alguns desses parâmetros não sejam fornecidos ele pega seus valores padrões existentes em um arquivo de configurações.
 
 Inicialmente, o escravo deve procurar no \textit{registry} uma referência para o mestre, e assim que ele conseguir ele solicita ao mestre para ser adicionado através do serviço de \textit{addSlave} fornecido pelo mestre. Após estar registrado
 no mestre o escravo fica aguardando alguma solicitação de subataque do mestre. 
@@ -344,12 +430,23 @@ no mestre o escravo fica aguardando alguma solicitação de subataque do mestre.
 O comando para se iniciar um escravo é:
 
 \begin{lstlisting}
-java br.inf.ufes.ppd.application.Client <arquivo> <Trecho conhecido> [<Tamanho do vetor de bytes>]\end{lstlisting}
+java br.inf.ufes.ppd.application.SlaveServer <dicionario> <nome> <registry>\end{lstlisting}
 
-%falar desse comando ai -Djava.rmi.server.hostname=(IP DA MAQUINA_HOST) 
+
 
 \section{Mestre}
 
+O mestre recebe como parâmetro o endereço do \textit{registry}, caso ele não seja fornecido é utilizado o endereço padrão
+que existe no arquivo de configurações.
+
+O mestre é a aplicação que fornece o serviço de \textit{attack} para um cliente. Quando esse serviço é solicitado
+ele delega subataques para os escravos que estão registrados nele. Assim, quando todos os escravos terminam seu trabalho o 
+mestre envia a resposta para o cliente com os possíveis resultados encontrados durante os subataques.
+
+O comando para se iniciar um escravo é:
+
+\begin{lstlisting}
+java br.inf.ufes.ppd.application.MasterServer <registry>\end{lstlisting}
 
 
 
@@ -436,12 +533,12 @@ Outra questão é que não seria possível testar o sistema em várias máquinas
 
 \section{Desempenho de Paralelismo em uma Única Máquina}
 
-\begin{figure}[!htb]
-\centering
-\caption{Legenda}
-\includegraphics[scale=0.5]{figuras/Hardware/pt4800.png}
-\label{fig:pt4800}
-\end{figure}
+%\begin{figure}[!htb]
+%\centering
+%\caption{Legenda}
+%\includegraphics[scale=0.5]{figuras/Hardware/pt4800.png}
+%\label{fig:pt4800}
+%\end{figure}
 
 
 \section{Desempenho Distribuído em Várias Máquinas}
