@@ -498,19 +498,19 @@ A interoperabilidade do trabalho foi testada com os seguintes grupos:
 
 	\item Grupo: David Morosini e Gustavo Monjardim.
 	\item Grupo: André Barreto e Eric Santos.
-	\item Grupo: Eduardo e Gustavo.
-	\item Grupo: Eduardo e Thiago Borges.
+	\item Grupo: Eduardo Dalapicola e Gustavo Duarte.
+	\item Grupo: Eduardo Oliveira e Thiago Borges.
 
 \end{itemize}
 
 \section{Problemas Encontrados}
+
 Um problema que aconteceu durante um dos testes de interoperabilidade foi no uso de um roteador, quando todo mundo estava conectado à rede um dos grupos abria o mestre e os outros criavam escravos, porém percebeu-se que havia uma demora de cerca de 2 a 3 minutos para que o mestre recebesse a solicitação e registrasse o cliente. E mais, ao se criar um ataque havia uma demora muito grande para que os escravos recebessem a solicitação do mestre, isso fez com que fosse inviável o uso do roteador para a realização dos testes.
 
 Um outro problema que ocorreu foi que um grupo havia modificado a interface original adicionando um construtor com isso ocorria a exceção \textit{Unmarshalling Exception} que fazia com que não encontrasse as classes, pois em Java ao adicionar algum método a uma interface ele a considera uma nova versão diferente da original.
 
-Problema dos indices
-
-O restante dos problemas basicamente se relacionavam com o uso do registry
+Ocorreu também um problema relacionado aos índices do dicionário. O dicionário possui 80368 palavras e portanto seus índices variam de 0 a 80367. Nesse trabalho os índices eram percorridos através de um laço \textit{for} que cuja condição de parada
+era feita por um teste de menor que 80368. Porém um grupo havia implementado a checagem dos índices de uma forma diferente utilizando o menor ou igual na condição de parada. Com isso, ocorria uma exceção de \textit{IndexOutOfBoundsException} fazendo com que o escravo falhasse. Para corrigir esse problema foi adicionada uma verificação dos índices de forma que caso ocorresse a exceção ela era tratada e o escravo não falhava.
 
 \chapter{Análise de Desempenho} 
 Após a implementação do trabalho foram realizadas análises de desempenho com o objetivo de se conseguir observar se realmente
@@ -533,15 +533,66 @@ Outra questão é que não seria possível testar o sistema em várias máquinas
 
 \section{Desempenho de Paralelismo em uma Única Máquina}
 
-%\begin{figure}[!htb]
-%\centering
-%\caption{Legenda}
-%\includegraphics[scale=0.5]{figuras/Hardware/pt4800.png}
-%\label{fig:pt4800}
-%\end{figure}
+\begin{figure}[!htb]
+\centering
+\includegraphics[scale=0.65]{figuras/temporesposta_centralizado.png}
+\caption{Gráfico do Tempo de Resposta x Tamanho da Mensagem}
+\label{fig:dist:tempo_respostaXtamanho_msg}
+\end{figure}
+
+\begin{figure}[!htb]
+\centering
+\includegraphics[scale=0.65]{figuras/speedup_centralizado.png}
+\caption{Gráfico do Tempo de Resposta x Tamanho da Mensagem}
+\label{fig:dist:tempo_respostaXtamanho_msg}
+\end{figure}
+
+\begin{figure}[!htb]
+\centering
+\includegraphics[scale=0.65]{figuras/eficiencia_centralizado.png}
+\caption{Gráfico do Tempo de Resposta x Tamanho da Mensagem}
+\label{fig:dist:tempo_respostaXtamanho_msg}
+\end{figure}
+
+\begin{figure}[!htb]
+\centering
+\includegraphics[scale=0.65]{figuras/overhead_centralizado.png}
+\caption{Gráfico do Tempo de Resposta x Tamanho da Mensagem}
+\label{fig:dist:tempo_respostaXtamanho_msg}
+\end{figure}
 
 
 \section{Desempenho Distribuído em Várias Máquinas}
+
+\begin{figure}[!htb]
+\centering
+\includegraphics[scale=0.65]{figuras/temporesposta_distribuido.png}
+\caption{Gráfico do Tempo de Resposta x Tamanho da Mensagem}
+\label{fig:dist:tempo_respostaXtamanho_msg}
+\end{figure}
+
+\begin{figure}[!htb]
+\centering
+\includegraphics[scale=0.65]{figuras/speedup_distribuido.png}
+\caption{Gráfico do Tempo de Resposta x Tamanho da Mensagem}
+\label{fig:dist:tempo_respostaXtamanho_msg}
+\end{figure}
+
+\begin{figure}[!htb]
+\centering
+\includegraphics[scale=0.65]{figuras/eficiencia_distribuido.png}
+\caption{Gráfico do Tempo de Resposta x Tamanho da Mensagem}
+\label{fig:dist:tempo_respostaXtamanho_msg}
+\end{figure}
+
+\begin{figure}[!htb]
+\centering
+\includegraphics[scale=0.65]{figuras/overhead_distribuido.png}
+\caption{Gráfico do Tempo de Resposta x Tamanho da Mensagem}
+\label{fig:dist:tempo_respostaXtamanho_msg}
+\end{figure}
+
+
 
 % Conclusão
 % ---
