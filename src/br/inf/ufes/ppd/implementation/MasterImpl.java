@@ -192,6 +192,21 @@ public class MasterImpl implements Master {
             slavesWorking = new HashMap<>(slavesList);
         }
         
+        if(slavesWorking.isEmpty()){
+            
+            System.err.println("No slaves on. Can't redistribute jobs now. "
+                                + "When some slave is registered it will receive the job");
+            
+            for (UUID uuid : failedSlaves.keySet()) {
+                
+                synchronized(slavesList){
+                    slavesList.put(uuid, failedSlaves.get(uuid));
+                }
+            }
+            
+            return;
+        }
+        
         System.out.println("Starting redistribution");
         
         for (UUID failedSlaveID : failedSlaves.keySet()) {
@@ -287,7 +302,7 @@ public class MasterImpl implements Master {
         
         synchronized(slavesList){
             if(slavesList.isEmpty())
-                throw new RemoteException("There aren't slaves at moment. Try again later.");
+                throw new RemoteException("There aren't registered slaves at moment. Try again later.");
         }
         
         int attackID = getAttackNumber();
@@ -476,6 +491,8 @@ public class MasterImpl implements Master {
         @Override
         public void run() {
 
+            System.out.println("Monitoring slaves");
+            
             if(hasAttack()){
                 Map<UUID, SlaveControl> downSlaves = new HashMap<>();
                 Map<UUID, SlaveControl> slavesCopy;

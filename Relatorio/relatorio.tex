@@ -299,11 +299,14 @@
 % ----------------------------------------------------------
 \chapter{Introdução} 
 Nas últimas décadas houve uma crescente demanda na área de processamento de dados, o que exigiu o desenvolvimento de máquinas
-mais poderosas. Porém, apesar da grande capacidade existente nos novos computadores quando comparados aos primeiros a serem produzidos e até mesmo a computadores de uma década atrás principalmente ao se analisar capacidade de processamento e memória, eles ainda não são capazes de atender essas demandas de processamentos sozinhos. Por esse motivo foram desenvolvidas várias técnicas de concorrência o que contribuiu para a criação dos Sistemas Distribuídos.
+mais poderosas. Apesar da grande capacidade existente nos novos computadores, principalmente ao se analisar as capacidades de processamento e memória, nota-se uma exorbitante diferença quando comparados as primeiras máquinas produzidas e até mesmo a máquinas de uma década atrás. Porém, mesmo com esses grandes avanços eles ainda não são capazes de atender a determinadas demandas de processamento sozinhos. Por esse motivo foram desenvolvidas várias técnicas de programação concorrente e distribuída o que contribuiu para o surgimento dos Sistemas Distribuídos.
 
-%Um Sistema Distribuído é um sistema onde os componentes de \textit{hardware} ou \textit{software} se localizam em regiões físicas diferentes mas estão interligados em rede de forma que consigam se comunicar e coordenar suas ações entre sí.
+Em um sistema distribuído os componentes de \textit{hardware} ou \textit{software} de diferentes equipamentos se localizam em regiões físicas diferentes mas estão interligados em rede de forma que se comunicam e coordenam suas ações entre sí a fim de
+atingir um objetivo em comum. Atualmente, esses sistemas são utilizados em \textit{Render farms} - para renderização de vídeos
+e jogos - servidores WEB, serviços de resolução de nomes(DNS), entre várias outras aplicações.
 
-Esse trabalho tem por objetivo praticar programação paralela usando o \textit{middleware} JavaRMI e realizar a análise de desempenho em um cluster de computadores. Ele consistirá na implementação de uma arquitetura mestre/escravo para realizar um ataque de dicionário em uma mensagem criptografada.
+Esse trabalho tem por objetivo praticar programação paralela e distribuída usando o \textit{middleware} JavaRMI além de 
+realizar análises de desempenho em um cluster de computadores. Ele consistirá na implementação de uma arquitetura mestre/escravo para realizar um ataque de dicionário em uma mensagem criptografada.
 
 
 \chapter{Implementação} 
@@ -316,7 +319,7 @@ do código e das implementações de cada elemento. O trabalho é composto dos s
 	cliente e mestre.
 	
 	\item \textbf{br.inf.ufes.ppd.application:} Nesse pacote estão as aplicações que oferecerão os serviços indicados nas  
-	interfaces. Estão nesse pacote as aplicações de Cliente, Escravo, Mestre e a aplicação que realiza o servço de forma
+	interfaces. Estão nesse pacote as aplicações de Cliente, Escravo, Mestre e a aplicação que realiza o serviço de forma
 	centralizada.
 
 	\item \textbf{br.inf.ufes.ppd.implementation:} Nesse pacote se encontram as implementações dos serviços que são 
@@ -338,20 +341,61 @@ Para o correto funcionamento das aplicações desenvolvidas no trabalho sempre �
 		-Djava.rmi.server.hostname=(IP DA MAQUINA HOST)\end{lstlisting}
 \end{center}
 
-Essa diretiva é necessária para que o Java RMI possa adicionar a referência correta ao exportar um objeto remoto. 
+Essa diretiva é necessária para que o Java RMI possa criar a referência correta ao exportar um objeto remoto. 
 
 Outro comando que deve ser executado antes da inicialização de qualque elemento é o \textit{rmiregistry}. Ele deve ser
 executado dentro da pasta raiz onde se encontram as classes, no caso do NetBeans essa pasta é "build/classes/".
 Nessa pasta se encontra a pasta raiz do pacote do trabalho, nesse caso a pasta "br".
 
+\section{Cliente}
+
+O programa cliente recebe como argumentos: o nome do arquivo criptografado, o trecho conhecido do texto original e opcionalmente um terceiro parâmetro que indica o tamanho do vetor de \textit{bytes} aleatório que será gerado em caso do arquivo criptografado não existir.
+
+Assim, o cliente é responsável por localizar o mestre utilizando o \textit{Registry} e solicitar o serviço de ataque através do método \textit{attack}. Ao solicitar o serviço o cliente passa o arquivo criptografado e o trecho conhecido. Caso o nome do arquivo fornecido como argumento para o programa cliente seja inválido ele fica responsável por gerar um vetor aleatório de bytes, cujo tamanho será igual ao 3º parâmetro fornecido ou, caso esse não exista, um tamanho aleatório na faixa de 1Kb a 100Kb.
+
+O comando utilizado para iniciar o cliente é:
+
+\begin{lstlisting}
+java br.inf.ufes.ppd.application.Client <Arquivo> <Trecho> [<Tam. vetor bytes>]\end{lstlisting}
+
+
+\section{Escravo}
+O escravo recebe como parâmetros: o caminho para o arquivo de dicionário, o nome do escravo que será criado e endereço do \textit{registry}. Caso alguns desses parâmetros não sejam fornecidos ele pega seus valores padrões existentes em um arquivo de configurações.
+
+Inicialmente, o escravo deve procurar no \textit{registry} uma referência para o mestre, e assim que ele conseguir ele solicita ao mestre para ser adicionado através do serviço de \textit{addSlave} fornecido pelo mestre. Após estar registrado
+no mestre o escravo fica aguardando alguma solicitação de subataque do mestre. 
+
+O comando para se iniciar um escravo é:
+
+\begin{lstlisting}
+java br.inf.ufes.ppd.application.SlaveServer <dicionario> <nome> <registry>\end{lstlisting}
+
+
+\section{Mestre}
+
+O mestre recebe como parâmetro o endereço do \textit{registry}, caso ele não seja fornecido é utilizado o endereço padrão
+que existe no arquivo de configurações.
+
+O mestre é a aplicação que fornece o serviço de \textit{attack} para um cliente. Quando esse serviço é solicitado
+ele delega subataques para os escravos que estão registrados nele. Assim, quando todos os escravos terminam seu trabalho o 
+mestre envia a resposta para o cliente com os possíveis resultados encontrados durante os subataques.
+
+O comando para se iniciar um escravo é:
+
+\begin{lstlisting}
+java br.inf.ufes.ppd.application.MasterServer <registry>\end{lstlisting}
+
+
+Nas próxima seções serão discutidos os principais pontos da estrutura de dados utilizada no trabalho, decisões de projeto e 
+problemas que ocorreram durante a implementação.
+
 \section{Estrutura de Dados}
 
-Como o cliente é bem simples ele não possui uma estrutura muito complexa, já que basicamente ele só localiza um mestre para solicitar o serviço de ataque enviando logo em seguida o arquivo criptografado e o trecho conhecido ficando bloqueado enquanto não recebe uma resposta do mestre. Portanto, sua estrutura não será discutida em detalhes.
+Como o cliente é bem simples ele não possui uma estrutura muito complexa já que sua função é, basicamente, localizar um mestre para solicitar o serviço de ataque enviando o arquivo criptografado e o trecho conhecido, e após isso fica bloqueado aguardando uma resposta do mestre. Portanto, sua estrutura não será discutida em detalhes.
 
 O escravo também não possuí muitas complexidades com relação a estrutura de dados, mas no seu serviço já existe um 
-diferencial que é o uso de \textit{threads}. Basicamente, ao receber uma solicitação de subataque ele cria uma \textit{thread} para executar o subataque de forma que se outro ataque for solicitado ele não fica bloqueado atendendo ao primeiro que chegou.
-A única informação que o escravo possui é seu ID de identificação que é único, e uma lista de chaves candidatas que é percorrida durante o ataque a fim de verificar se algumas delas produzem um arquivo que possua o trecho conhecido.
-Outra \textit{thread} é usada no serviço de \textit{rebind} do escravo ao mestre.
+diferencial que é o uso de \textit{threads}. Basicamente, ao receber uma solicitação de subataque ele cria uma \textit{thread} para executar aquele subataque de forma que se outro ataque for solicitado ele não fica bloqueado atendendo ao primeiro que chegou.
+A única informação que o escravo possui é seu ID de identificação que é único, e uma lista de chaves candidatas, que são lidas de um arquivo de dicionário, e percorrida durante o ataque a fim de verificar se algumas delas produzem um arquivo que possua o trecho conhecido. Outra \textit{thread} é usada no serviço de \textit{rebind} do escravo ao mestre.
 
 A maior complexidade do trabalho foi na implementação do mestre. Como ele é o responsável pelo controle dos ataques, 
 da distribuição dos subataques, por responder o cliente, entre outras tarefas, torna-se necessário o uso de uma estrutura 
@@ -375,80 +419,95 @@ Sendo assim, para a implementação do mestre foram criadas as seguintes estrutu
 	
 \end{itemize}
 
-
-
-
+Para acessar essas estruturas o mestre possui \textit{HashMaps}, que facilitam o acesso e localização das estruturas. 
+Essas \textit{HashMaps} são as seguintes:
 
 \begin{itemize}
 
-
-	\item \textbf{HashMap de UUID em Escravos:}
+	\item \textbf{HashMap de UUID em Escravos:} Esse mapeamento permite que dado uma UUID de um escravo o mestre consiga 
+	obter o \textit{SlaveControl} daquele escravo.
 	
-	\item \textbf{HashMap de AtaqueID em Lista de Guess:}
+	\item \textbf{HashMap de AtaqueID em Lista de \textit{Guess}:} Esse mapeamento permite que dado um número de ataque o
+	mestre obtenha a lista de \textit{guess} desse ataque.
 	
-	\item \textbf{HashMap de SubataqueID em AtaqueID:}
+	\item \textbf{HashMap de SubataqueID em AtaqueID:} Esse mapeamento permite ao mestre saber qual é o ataque que um 
+	subataque faz parte.
 	
-	\item \textbf{HashMap de AtaqueID em AttackControl:}
+	\item \textbf{HashMap de AtaqueID em AttackControl:} Esse mapeamento permite que o mestre obtenha o
+	\textit{AttackControl} de um número de ataque.
 	
 \end{itemize}
 
+Além dessas estruturas, o mestre possui \textit{threads} para o gerenciamento. Uma delas é a \textit{thread} que faz a tarefa
+de monitoramento, que é responsável por verificar se durante um ataque algum escravo está a mais de 20 segundos sem enviar
+algum \textit{checkpoint} ou \textit{foundGuess}, caso esteja esse escravo é removido e seu trabalho é redistribuído entre os
+outros escravos.
 
+Uma outra \textit{thread} é usada na tarefa de ataque, sempre que o mestre recebe uma requisição de ataque ela é criada para 
+a distribuição do serviço entre os escravos. Ela é necessária pois permite que o mestre receba vários ataques em paralelo.
+
+Por fim, uma outra ferramenta utilizada na implementação do mestre é o \textit{synchronized} de Java, que faz com que o acesso
+a uma determinada variável seja serializado. Essa ferramenta é de extrema importância para o mestre, visto que ele pode
+receber várias solicitações de ataque em paralelo, e o acesso a algumas estruturas se não forem serializados podem gerar
+exceção de acesso concorrente.
 
 
 \section{Decisões de Projeto}
-Sub ataques
+Durante a implementação do projeto algumas decisões tiveram que ser tomadas, elas serão discutidas a seguir.
 
-vetor separado de guess
+\begin{enumerate}
 
-vetor separado de ataques
+	\item \textbf{Lista separada de \textit{guess}}: A primeira decisão tomada foi a necessidade de criação de uma lista
+	de \textit{guess}. Essa decisão foi tomada pensando no caso de algum escravo falhar durante o ataque. Inicialmente, cada
+	escravo possuía uma lista de \textit{guesses} encontrados, porém dessa forma ficou muito complicado de se obter todos os 
+	\textit{guesses} encontrados para um ataque. Para fazer isso o mestre tinha que percorrer todos os escravos verificando
+	cada um dos subataques que eles eram responsáveis para montar a resposta para o cliente. Assim, a criação de uma lista
+	separada de \textit{guesses} permitiu que quando um ataque terminasse o mestre apenas precisaria verificar a lista de
+	\textit{guesses} daquele ataque, dessa forma era muito mais rápido e fácil já que o mestre não tinha que se preocupar
+	caso um escravo delegado para aquele ataque tivesse falhado sendo necessário percorrer cada escravo que falhou pegando os
+	\textit{guesses} daquele ataque. Com a criação dessa lista todos os \textit{guesses} encontrados por qualquer escravo
+    são adicionados a lista de \textit{guess} daquele ataque, ficando a cargo do mestre apenas pegar essa lista ao final
+    do ataque.
+	
+	\item \textbf{Criação de subataques:} No início da implementação não existia a ideia de subataque, cada ataque recebido
+	pelo mestre obtinha um identificador único que era o mesmo enviado aos escravos, porém no momento que se começou a 
+	implementação da redistribuição de ataques devido a alguma falha de um escravo, percebeu-se que existia um problema de
+	identificar o andamento do ataque de um escravo já que todos enviavam \textit{checkpoints} para um mesmo número 
+	de ataque. Esse problema será discutido novamente na Seção \ref{sec:prob_mestre}.
+	
+	\item \textbf{Usar uma cópia de escravos para iniciar ataque:} Essa decisão de criar uma cópia de escravos foi baseada
+	na possibilidade de solicitações de \textit{addSlave} por outros escravos durante a chegada de um ataque,
+	visto que nesse serviço é usado o \textit{synchronized} de Java para serialização da operação. Caso não fosse feito 
+	a cópia, seria necessário serializar toda a distribuição do ataque, isso impediria um novo escravo de se registrar no
+	mestre.
 
-o q fazer se nao tiver escravos
+	\item \textbf{Checkpoint:} Uma decisão relacionada ao \textit{checkpoint} diz respeito a verificação de um subataque.
+	Suponha que um escravo envie um \textit{checkpoint} com o índice 10 porém essa mensagem demore a chegar devido a lentidão
+	da rede ou por qualquer outra razão, e suponha que o mesmo escravo envie um outro checkpoint com o índice 20 que chega
+	antes do anterior. Assim na estrutura de controle de subataque será salvo o valor 20, mas quando chegar a mensagem
+	atrasada com o índice 10 ela irá sobrepor ao índice mais atual recebido. Pensando nisso, a alteração do índice mais
+	recente na estrutura de controle de subataque verifica se o índice recebido é maior que o que está salvo, caso seja 
+	discarta o índice recebido pois ele está atrasado. Da mesma forma essa ideia foi implementada na hora de alterar o
+	tempo de último contato com algum escravo.	
 
-usar copia de slaves para iniciar ataque
+	\item \textbf{Lista separada de ataques:} No início da implementação cada escravo possuía uma lista de controle de ataques,
+	porém com a implementação da redistribuição, essa ideia acabou se tornando inviável. Surgiu o mesmo problema que ocorreu
+	com a lista de \textit{guess} em cada escravo. Diante disso foi criada uma lista separada de controles de ataques, o que
+	facilitou muito o restante do desenvolvimento do projeto.
 
-a parada do checkpoint e do time
+	\item \textbf{Se não existir escravos:} Caso o mestre receba uma requisição de ataque e não existam escravos registrados
+	no momento o mestre lança uma \textit{RemoteExceptio} informando que não existem escravos registrados no momento e
+	pede ao cliente para tentar mais tarde. Outro caso que foi tratado é se no momento que se faz a redistribuição dos
+	trabalhos não existirem escravos o mestre não elimina o escravo que falhou, assim sempre durante o monitoramento
+	dos escravos é verificado se já chegou um novo escravo para receber aquele trabalho. Uma ideia que poderia ser usada era
+	o mestre criar um escravo para resolver o problema, porém não deu tempo de implementar.
+	
+	\item \textbf{Redistribuição dos trabalhos:} Em caso de um escravo falhar e deixar um trabalho pendente, esse trabalho é
+	novamente dividido entre os escravos que estão funcionando. Uma ideia que poderia ser melhorada nessa decisão é verificar
+	se o tamanho do trabalho é maior do que um tamanho mínimo, pois caso o trabalho seja pequeno não valerá a pena
+	realizar a redistribuição do trabalho para todos os escravos.
 
-
-\section{Cliente}
-
-O programa cliente recebe como argumentos: o nome do arquivo criptografado, o trecho conhecido do texto original e opcionalmente um terceiro parâmetro que indica o tamanho do vetor de \textit{bytes} aleatório que será gerado em caso do arquivo criptografado não existir.
-
-Assim, o cliente é responsável por localizar o mestre utilizando o \textit{Registry} e solicitar o serviço de ataque através do método \textit{attack}. Ao solicitar o serviço o cliente passa o arquivo criptografado e o trecho conhecido. Caso o nome do arquivo fornecido como argumento para o programa cliente seja inválido o programa cliente é responsável por gerar um vetor aleatório de bytes, cujo tamanho será igual ao 3º parâmetro fornecido ou, caso esse não exista, um tamanho aleatório na faixa de 1Kb a 100Kb.
-
-O comando utilizado para iniciar o cliente é:
-
-\begin{lstlisting}
-java br.inf.ufes.ppd.application.Client <Arquivo> <Trecho> [<Tam. vetor bytes>]\end{lstlisting}
-
-
-\section{Escravo}
-O escravo recebe como parâmetros: o caminho para o arquivo de dicionário, o nome do escravo que será criado e endereço do \textit{registry}. Caso alguns desses parâmetros não sejam fornecidos ele pega seus valores padrões existentes em um arquivo de configurações.
-
-Inicialmente, o escravo deve procurar no \textit{registry} uma referência para o mestre, e assim que ele conseguir ele solicita ao mestre para ser adicionado através do serviço de \textit{addSlave} fornecido pelo mestre. Após estar registrado
-no mestre o escravo fica aguardando alguma solicitação de subataque do mestre. 
-
-O comando para se iniciar um escravo é:
-
-\begin{lstlisting}
-java br.inf.ufes.ppd.application.SlaveServer <dicionario> <nome> <registry>\end{lstlisting}
-
-
-
-\section{Mestre}
-
-O mestre recebe como parâmetro o endereço do \textit{registry}, caso ele não seja fornecido é utilizado o endereço padrão
-que existe no arquivo de configurações.
-
-O mestre é a aplicação que fornece o serviço de \textit{attack} para um cliente. Quando esse serviço é solicitado
-ele delega subataques para os escravos que estão registrados nele. Assim, quando todos os escravos terminam seu trabalho o 
-mestre envia a resposta para o cliente com os possíveis resultados encontrados durante os subataques.
-
-O comando para se iniciar um escravo é:
-
-\begin{lstlisting}
-java br.inf.ufes.ppd.application.MasterServer <registry>\end{lstlisting}
-
-
+\end{enumerate}
 
 \section{Problemas Durante a Implementação}
 Durante o desenvolvimento do trabalho alguns problemas surgiram fazendo com que fosse necessário realizar algumas mudanças
@@ -468,20 +527,21 @@ O problema que surgiu foi durante a implementação do método \textit{startSubA
 Outro problema que surgiu durante a implementação do escravo foi o modo de verificar se o trecho conhecido existia no arquivo
 descriptografado, podendo assim ser um candidato a ser o arquivo original. Essa verificação estava sendo feita da seguinte
 forma: o array de bytes descriptografado era transformado em uma \textit{String} e a partir dela era usado o método dessa classe chamado \textit{contains}, que verifica se um uma \textit{substring} existe na \textit{string}. Porém ao se converter esse \textit{array} de \textit{bytes} em uma \textit{string} o Java utiliza uma codificação padrão interna que pode não ser a
-mesma do arquivo que foi criptografado fazendo com que várias ou nenhuma chave candidata possa ser encontrada.
+mesma do arquivo que foi criptografado fazendo com que várias ou nenhuma chave candidata possam ser encontradas.
 
 \subsection{Mestre}
+\label{sec:prob_mestre}
 O grande problema durante a implementação do mestre foi relacionado a estabelecer uma boa estrutura de dados para que fosse
 possível realizar o gerenciamento dos escravos e ataques. No início do desenvolvimento a estrutura utilizada não possuía a ideia de subataques, isso fez com que surgisse um problema na hora da divisão de serviço entre os escravos. 
 
-Como cada ataque possuía um número único de identificação ao dividir o trabalho entre os escravos eles recebiam esse mesmo número, assim, quando um escravo mandava um checkpoint, duas coisas estavam ocorrendo: 
+Como cada ataque possuía um número único de identificação ao dividir o trabalho entre os escravos eles recebiam esse mesmo número, assim, quando um escravo mandava um \textit{checkpoint}, duas coisas estavam ocorrendo: 
 
 \begin{itemize}
 
-	\item Quando um escravo que recebia a primeira parte do serviço enviava um checkpoint ele era armazenado na estrutura de controle do ataque, porém quando um escravo que recebeu um intervalo de índices maior ao enviar o primeiro checkpoint já eliminava a informação do primeiro escravo, pois o checkpoint mais atual era salvo no lugar do anterior na estrutura de controle do ataque. Assim não se tinha uma forma de verificar o status de ataque de cada escravo, pois o que recebia o maior índice "dominava" nos checkpoints.
+	\item Quando um escravo que recebia a primeira parte do serviço enviava um \textit{checkpoint} ele era armazenado na estrutura de controle do ataque, porém quando um escravo que recebeu um intervalo de índices maior ao enviar o primeiro \textit{checkpoint} já eliminava a informação do primeiro escravo, pois o \textit{checkpoint} mais atual era salvo no lugar do anterior na estrutura de controle do ataque. Assim não se tinha uma forma de verificar o status de ataque de cada escravo, pois o que recebia o maior índice "dominava" os \textit{checkpoints}.
 
 	\item A verificação para determinar se um trabalho havia terminado era baseada no índice recebido, se ele fosse igual ao último significava que havia terminado. Assim, quando o escravo que recebeu o maior índice terminava seu trabalho o mestre 
-verificava que o serviço tinha acabado e enviava a resposta ao cliente, porém os outros escravos que estavam trabalhando no
+equivocadamente verificava que o serviço tinha acabado e enviava a resposta ao cliente, porém os outros escravos que estavam trabalhando no
 mesmo ataque podiam não ter terminado a sua parte. Com isso, o mestre enviava uma resposta de um trabalho incompleto para o cliente.
 
 \end{itemize}
@@ -523,7 +583,7 @@ Para a realização das análises foram utilizados dois tipos de computadores:
 
 	\item Para a análise de desempenho de paralelismo em uma única máquina com vários escravos foi utilizado um notebook com processador \textit{Intel Core i5-2410M CPU 2.30GHz x 4} e 6GB de memória RAM com o Sistema Operacional \textit{Linux Mint KDE 64-bit}.
 
-	\item Já para a análise de desempenho distribuído foram utilizados os computadores do laboratório de graduação (LabGrad) que possuem as seguintes configurações: processador \textit{AMD Athlon(tm) Dual Core Processor 5000B} com 4GB de memória RAM e o Sistema Operacional utilizado foi o \textit{Ubuntu 16.04.4 LTS}.
+	\item Já para a análise de desempenho distribuído foram utilizados os computadores do laboratório de graduação (LabGrad) que possuem as seguintes configurações: processador \textit{AMD Athlon(tm) Dual Core Processor 5000B} com 4GB de memória RAM e o Sistema Operacional utilizado foi o \textit{Ubuntu 16.04.4 LTS}. A configuração de rede das máquinas era o padrão Ethernet 100Mbps.
 
 \end{enumerate}
 
@@ -533,36 +593,97 @@ Outra questão é que não seria possível testar o sistema em várias máquinas
 
 \section{Desempenho de Paralelismo em uma Única Máquina}
 
+As medições para essa análise foram obtidas utilizando o computador notebook pessoal. Durante as medições procurou-se deixar
+a máquina com apenas as aplicações rodando para evitar possíveis ruídos, mas é bom lembrar que existiam os processos em \textit{background} do SO. 
+
+Para a medição dos dados foi criado uma aplicação cliente para gerar tamanhos aleatórios de vetor de 0 a 60Kb, sendo que os
+tamanhos foram espaçados de 5 em 5Kb.
+
+A Figura \ref{fig:cent:tempo_respostaXtamanho_msg} apresenta um gráfico com o tempo de resposta obtido com diferentes tamanhos de mensagem para diferentes números de escravos em uma mesma máquina. É bom observar que o caso onde existe apenas um escravo é a medição obtida com uma aplicação centralizada que realiza o ataque sozinha.
+
+Ao observar o gráfico percebe-se claramente que à medida que aumenta-se o número de escravos, ou seja, faz-se o paralelismo da 
+execução da tarefa(já que foi utilizado apenas um computador), o tempo de resposta diminui como imaginado, visto que ao
+realizar o paralelismo em um computador com mais de um \textit{core} de processamento espera-se que a tarefa seja executada
+em um tempo menor.
+
+Outro ponto interessante de se notar é o fato de que apesar de se aumentar o número de escravos a partir do momento em que se adiciona mais de 4 escravos o tempo de resposta não sofre muitas mudanças sendo aproximadamente o mesmo até 8 escravos. Isso
+pode ser explicado pelo fato de que como a máquina possui apenas 4 \textit{cores} de processamento, não faria muito sentido o desempenho aumentar muito ao se colocar mais escravos do que o número de \textit{cores}, podendo até piorar por causa do \textit{overhead} de escalonamento de processos e devido aos processos do SO que rodam em \textit{background}.
+
+
 \begin{figure}[!htb]
 \centering
 \includegraphics[scale=0.65]{figuras/temporesposta_centralizado.png}
 \caption{Gráfico do Tempo de Resposta x Tamanho da Mensagem}
-\label{fig:dist:tempo_respostaXtamanho_msg}
+\label{fig:cent:tempo_respostaXtamanho_msg}
 \end{figure}
+
+A Figura \ref{fig:cent:speedupXtamanho_msg} apresenta o gráfico com o \textit{Speed Up} como função do tamanho da mensagem para diferentes números de escravos. Para se calcular o \textit{Speed Up} foi utilizado como tempo de execução serial o obtido pela aplicação centralizada.
+
+Ao analisar o gráfico nota-se que à medida que o número de escravos aumenta o \textit{Speed Up} também vai aumentando, porém 
+a partir de 4 escravos pra cima o seu valor varia muito pouco. Como visto em sala de aula verifica-se que o \textit{Speed Up}
+obtido foi sublinear, o que era o esperado, pois segundo a Lei de Amdahl o maior \textit{Speed Up} que se consegue obter é o liner onde o \textit{Speed Up} é igual ao número de \textit{threads} de execução paralela, sendo que obter esse valor ótimo é
+impossível visto que sempre existirá uma parte do programa que tem que ser executado serialmente, no caso desse trabalho o 
+mestre é o que precisa executar algumas ações de forma serial.
 
 \begin{figure}[!htb]
 \centering
-\includegraphics[scale=0.65]{figuras/speedup_centralizado.png}
-\caption{Gráfico do Tempo de Resposta x Tamanho da Mensagem}
-\label{fig:dist:tempo_respostaXtamanho_msg}
+\includegraphics[scale=0.55]{figuras/speedup_centralizado.png}
+\caption{Gráfico do Speed Up x Tamanho da Mensagem}
+\label{fig:cent:speedupXtamanho_msg}
 \end{figure}
+
+A Figura \ref{fig:cent:eficienciaXtamanho_msg} apresenta o gráfico com a eficiência em função do tamanho da mensagem para 
+diferentes números de escravos.
+
+Ao observar o gráfico percebe-se claramente que quanto mais escravos são adicionados menor é a eficiência. Isso é esperado
+visto que como observado na Figura \ref{fig:cent:speedupXtamanho_msg} à medida que aumenta-se o número de escravos o \textit{Speed Up} não se altera muito sendo o mesmo para mais do que 4 escravos com isso a eficiência tende a ser menor
+para um número maior de escravos.
+
+Um outro ponto a se destacar é que para 2 escravos e eficiência foi um pouco maior do que 1, isso é impossível pelo fato de
+que a maior eficiência possível de se obter é 1. Isso pode ter ocorrido devido a ruídos que podem ter ocasionado em erros na
+medição dos tempos.
 
 \begin{figure}[!htb]
 \centering
-\includegraphics[scale=0.65]{figuras/eficiencia_centralizado.png}
-\caption{Gráfico do Tempo de Resposta x Tamanho da Mensagem}
-\label{fig:dist:tempo_respostaXtamanho_msg}
+\includegraphics[scale=0.55]{figuras/eficiencia_centralizado.png}
+\caption{Gráfico da Eficiência x Tamanho da Mensagem}
+\label{fig:cent:eficienciaXtamanho_msg}
 \end{figure}
+
+Por fim, a Figura \ref{fig:cent:overheadXtamanho_msg} apresenta as medições do \textit{overhead} obtidos. Pode-se notar que 
+o gráfico apresenta muita oscilação causada provavelmente por existirem processos do SO rodando em \textit{background}. Isso
+faz com que não forneça informações tão relevantes, como os processos rodam na mesma máquina o \textit{overhead} é muito
+pequeno sua medição acaba ficando refém dos ruídos.
 
 \begin{figure}[!htb]
 \centering
 \includegraphics[scale=0.65]{figuras/overhead_centralizado.png}
-\caption{Gráfico do Tempo de Resposta x Tamanho da Mensagem}
-\label{fig:dist:tempo_respostaXtamanho_msg}
+\caption{Gráfico do Overhead x Tamanho da Mensagem}
+\label{fig:cent:overheadXtamanho_msg}
 \end{figure}
 
 
 \section{Desempenho Distribuído em Várias Máquinas}
+
+As medições para essa análise foram obtidas utilizando os computadores do LabGrad. Vale destacar que até os testes para a 
+obtenção dos dados para 7 escravos o LabGrad estava com poucos alunos de graduação o que permitiu uma melhor medição dos tempos, porém ao se realizar a medição para 8 escravos, o LabGrad teve um problema de rede e quando foi resolvido haviam muitos alunos utilizando as máquinas, isso fez com que os dados obtidos para 8 escravos fossem prejudicados, porém mesmo com esse problema pode-se realizar uma análise do desempenho.
+
+Para a medição dos dados também foi usada a aplicação cliente de teste para gerar tamanhos aleatórios de vetor de 0 a 60Kb,
+sendo que os tamanhos foram espaçados de 5 em 5Kb.
+
+Para os testes foram utilizados 4 máquinas. Para os testes até 4 escravos cada máquina possuía rodando apenas 1 escravo, para 5 escravos até 8 foram sendo adicionados escravos em cada uma dessas 4 máquinas de modo que ao final cada uma tivesse apenas 2
+escravos rodando ao mesmo tempo. Essa estratégia foi usada pois cada computador possuía dois \textit{cores} de processamento.
+
+A Figura \ref{fig:dist:tempo_respostaXtamanho_msg} apresenta um gráfico com o tempo de resposta obtido com diferentes tamanhos de mensagem para diferentes números de escravos de forma distribuída. Destaca-se que o caso onde existe apenas um escravo é a medição foi obtida com uma aplicação centralizada que realizou o ataque sozinha em uma das máquinas.
+
+Ao observar o gráfico percebe-se claramente que à medida que aumenta-se o número de escravos, ou seja, faz-se a distribuição da tarefa entre as diferentes máquinas o tempo de resposta diminui como imaginado, como a tarefa será distribuída entre 
+diferentes máquinas cada uma com uma pequena parte da tarefa espera-se que o processamento de cada parte seja mais rápido.
+Destaca-se que o caso onde há apenas 1 escravo, foi medido rodando a mesma aplicação centralizada da análise anterior nas máquinas do LabGrad.
+
+Uma observação interessante de se notar é que diferentemente do caso anterior onde se analisou o desempenho de paralelismo após a utilização de 4 escravos o tempo de resposta foi basicamente o mesmo para até 8 escravos. Já nesse caso distribuído 
+nota-se que ao aumentar o número de escravos o tempo de resposta diminuiu para todos os escravos mesmo que a diferença entre 6 e 7 escravos seja pequena é possível observar uma diferença no tempo. Vale destacar novamente que para 8 escravos as medições foram prejudicadas pelo momento do teste e como não foi possível refazé-los eles apresentaram essa diferença. Mas acredita-se
+que caso os problemas citados não tivessem ocorrido o grafíco apresentaria uma melhora mesmo que pequena no tempo de resposta
+para o caso de 8 escravos.
 
 \begin{figure}[!htb]
 \centering
@@ -571,46 +692,68 @@ Outra questão é que não seria possível testar o sistema em várias máquinas
 \label{fig:dist:tempo_respostaXtamanho_msg}
 \end{figure}
 
+A Figura \ref{fig:dist:speedupXtamanho_msg} apresenta o gráfico do \textit{Speed Up} em função do tamanho da mensagem para diferentes números de escravos. O tempo de execução serial utilizado para o cálculo foi o tempo de execução da aplicação centralizada nas máquinas do LabGrad.
+
+Ao analisar o gráfico nota-se que à medida que o número de escravos aumenta o \textit{Speed Up} também vai aumentando, mas diferentemente da análise anterior eles não se aproximam de um valor em comum à medida que o número de escravos aumenta, sendo bem distintos. Para o caso de 8 escravos ele se equipara ao caso de 4 escravos devido aos problemas que ocorreram durante as medições. 
+
+Como visto em sala de aula verifica-se que o \textit{Speed Up} obtido foi linear, o que inicialmente é estranho, já que 
+esse é o máximo \textit{speed up} teórico possível.
+
+Esse resultado pode ter sido obtido por alguns fatores:
+
+\begin{itemize}
+	\item Erros de medições dos tempos;
+	\item O algoritmo sequencial não é o melhor que se pode conseguir;
+	\item A lei de Amdahl considera que o caso serial é executado por um único processador, o que nesse caso não ocorre visto 
+	que as máquinas possuem dois \textit{cores} de processamento, então mesmo que ela execute a tarefa sozinha o SO irá 
+	dividi-lá entre os processadores.
+\end{itemize}
+
 \begin{figure}[!htb]
 \centering
 \includegraphics[scale=0.65]{figuras/speedup_distribuido.png}
-\caption{Gráfico do Tempo de Resposta x Tamanho da Mensagem}
-\label{fig:dist:tempo_respostaXtamanho_msg}
+\caption{Gráfico do Speed Up x Tamanho da Mensagem}
+\label{fig:dist:speedupXtamanho_msg}
 \end{figure}
+
+
+A Figura \ref{fig:dist:eficienciaXtamanho_msg} apresenta a eficiência obtida para diferentes números de escravos. Percebe-se 
+que a eficiência foi aproximadamente 1 para todos os casos, exceto para o de 8 escravos devido aos problemas já citados.
+
+Percebe-se que a eficiência acaba oscilando para cima e para baixo de 1 isso pode ser ocasionado pelos mesmos problemas citados anteriormente para o \textit{Speed Up}. Com isso, considera-se aceitável os dados medidos já que eles não são muito
+maiores do que o valor máximo possível que é 1.
+
 
 \begin{figure}[!htb]
 \centering
 \includegraphics[scale=0.65]{figuras/eficiencia_distribuido.png}
-\caption{Gráfico do Tempo de Resposta x Tamanho da Mensagem}
-\label{fig:dist:tempo_respostaXtamanho_msg}
+\caption{Gráfico da Eficiência x Tamanho da Mensagem}
+\label{fig:dist:eficienciaXtamanho_msg}
 \end{figure}
+
+A Figura \ref{fig:dist:overheadXtamanho_msg} apresenta o \textit{overhead} medido para diferentes números de escravos. 
+
+Nesse caso observa-se uma oscilação ocasionada por ruídos da rede, mas mesmo com esse problema é possível verificar que à
+medida que se aumenta o número de escravos o \textit{overhead} aumenta. O que é algo esperado visto que torna-se necessário 
+enviar \textit{bytes} de dados para diferentes máquinas na rede.
 
 \begin{figure}[!htb]
 \centering
 \includegraphics[scale=0.65]{figuras/overhead_distribuido.png}
-\caption{Gráfico do Tempo de Resposta x Tamanho da Mensagem}
-\label{fig:dist:tempo_respostaXtamanho_msg}
+\caption{Gráfico do Overhead x Tamanho da Mensagem}
+\label{fig:dist:overheadXtamanho_msg}
 \end{figure}
-
-
 
 % Conclusão
 % ---
 \chapter{Conclusão}
 
-Ao final desse trabalho é possível notar que um sistema distribuído é uma ferramenta muito poderosa pois permite aproveitar recursos de diferentes equipamentos para executar uma tarefa em comum.
+Ao final desse trabalho é possível notar que um sistema distribuído é uma ferramenta muito poderosa pois permite aproveitar recursos de diferentes equipamentos para se executar uma tarefa em comum, de forma que com a distribuição do serviço entre as máquinas é consegue-se uma melhoria significativa no tempo de resposta. 
 
-Com a distribuição do serviço entre as máquinas é possível obter uma melhora significativa no tempo de resposta speedup. 
-Observa-se ainda que não é possível atingir o speed up ideal segundo aLei de Amihdal devido ao overhead existente na rede, processamento, etc.
+Através das análises realizadas foi possível verificar graficamente as vantagens de se realizar tarefas de forma paralela e/ou distribuída. Com essas análises também foi possível verificar alguns pontos interessantes, como o \textit{speed up} linear obtido na análise de desempenho distribuída, que é algo impossível de se obter e que pode ter sido causado pelos problemas citados, mas principalmente pelo fato de que a Lei de Amdahl considera o caso serial como sendo executado por um único processador, o que não ocorreu nesses casos visto que as máquinas possuíam mais de um \textit{core} de processamento.
 
-
-
-Outro ponto que é importante e que foi possível notar durante a implementação desse trabalho é a complexidade de funcionamento que existe na máquina responsável por realizar todo o gerenciamento, nesse caso representada pelo mestre. Ele tem que lidar: com o controle de máquinas ativas, com a distribuição das tarefas, com o controle do status das tarefas, com o controle de concorrência, redistribuição de tarefas, entre outros. Além de todas essas tarefas ele ainda tem que cuidar do acesso
+Outro ponto importante e que foi possível notar durante a implementação desse trabalho é a complexidade de funcionamento que existe na máquina responsável por realizar todo o gerenciamento, nesse caso representada pelo mestre. Ele tem que lidar: com o controle de máquinas ativas, com a distribuição das tarefas, com o controle do status das tarefas, com o controle de concorrência, redistribuição de tarefas, entre outros. Além de todas essas tarefas ele ainda tem que cuidar do acesso
 concorrente à variáveis de controle, que é um grande problema ao se trabalhar com muitas \textit{threads}, assim, percebe-se a necessidade que sempre vai existir para que algum pedaço do programa não seja paralelizável.
-
-
-falar das analises
-
 
 
 % ----------------------------------------------------------
@@ -622,7 +765,7 @@ falar das analises
 % ----------------------------------------------------------
 % Referências bibliográficas
 % ----------------------------------------------------------
-\bibliography{referencias} %% REFERENCIA AO ARQUIVO .bib
+%\bibliography{referencias} %% REFERENCIA AO ARQUIVO .bib
 
 \end{document}
 \grid
