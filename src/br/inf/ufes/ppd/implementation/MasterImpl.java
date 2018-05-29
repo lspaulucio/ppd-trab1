@@ -244,6 +244,9 @@ public class MasterImpl implements Master {
 
                     for (UUID slaveID : slavesWorking.keySet()) {
 
+                        if(startIndex == sub.getLastIndex())
+                            break;
+                        
                         subAttackID = getSubAttackNumber();
                         SlaveControl sc = slavesWorking.get(slaveID);
                         Slave slRef = sc.getSlaveRef();
